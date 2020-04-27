@@ -5,9 +5,30 @@ import sys
 from datetime import datetime
 from datetime import timedelta
 
-# 期間
+# 
+dt_now = datetime.now()
 start = datetime.strptime('2020-01-22', '%Y-%m-%d').date()
-end   = datetime.strptime('2020-04-15', '%Y-%m-%d').date()
+
+date_month = dt_now.month;
+date_day = dt_now.day;
+date_month2 = str(date_month)
+date_day2 = str(date_day)
+
+tomorrow = dt_now + timedelta(days=1)
+tomorrow_str = datetime.strftime(tomorrow, '%Y-%m-%d')
+
+if date_month < 10 :
+	date_month2 = "0" + str(date_month)
+date_day = dt_now.day;
+if date_day < 10 :
+	date_day2 = "0" + tr(date_day)
+
+
+date_string = str(dt_now.year) + "-" +  date_month2 + "-" + date_day2
+
+now_date = str(dt_now.year) + "\/" +  date_month2 + "\/" + date_day2 + " 19:30"
+
+end   = datetime.strptime(tomorrow_str, '%Y-%m-%d').date()
 
 
 
@@ -29,7 +50,9 @@ print( "{" )
 
 filename = './' + args[3]
 print( "\t\"querents\": {")
-print( "\t\t\"date\": \"2020\/04\/17 23:30\"," )
+
+output_str = "\t\t\"date\": \"" + now_date + "\","
+print( output_str )
 print( "\t\t\"data\": [" )
 with open(filename, 'r') as f3:
 	reader = csv.reader(f3)
@@ -89,7 +112,8 @@ print( "\t},")
 #
 filename = './' + args[1]
 print( "\t\"patients\": {")
-print( "\t\t\"date\": \"2020\/04\/17 23:30\"," )
+output_str = "\t\t\"date\": \"" + now_date + "\","
+print( output_str )
 print( "\t\t\"data\": [" )
 
 with open(filename, 'r') as f:
@@ -130,12 +154,7 @@ with open(filename, 'r') as f:
 		print(str2)
 		str2 = "\t\t\t\t\"性別\": "  + "\"" + row[8] + "\","
 		print(str2)
-		if row[ 10 ] == '軽症・中等症' :
-			keisyo = keisyo + 1
-		if row[ 10 ] == '重症' :
-			zyusyo = zyusyo + 1
-		if row[ 10 ] == '重症' :
-			shibo = shibo + 1
+
 
 		if row[13] == '1' :
 			str2 = "\t\t\t\t\"退院\": " + "\"〇\","
@@ -143,6 +162,12 @@ with open(filename, 'r') as f:
 		else :
 			str2 = "\t\t\t\t\"退院\": " + "\"\","
 			nyuin = nyuin + 1
+			if row[ 10 ] == '軽症・中等症' :
+				keisyo = keisyo + 1
+			if row[ 10 ] == '重症' :
+				zyusyo = zyusyo + 1
+			if row[ 10 ] == '死亡' :
+				shibo = shibo + 1
 
 		print(str2)
 		str2 = "\t\t\t\t\"date\": " + "\"" + date3 + "\"";
@@ -161,7 +186,8 @@ print( "\t},")
 # patients_summary
 #
 print( "\t\"patients_summary\": {")
-print( "\t\t\"date\": \"2020\/04\/17 23:30\"," )
+output_str = "\t\t\"date\": \"" + now_date + "\","
+print( output_str )
 print( "\t\t\"data\": [" )
 
 def daterange(_start, _end):
@@ -203,7 +229,8 @@ filename = './' + args[2]
 
 
 print( "\t\"inspection_persons\": {" )
-print( "\t\t\"date\": \"2020\/04\/17 11:00\"," )
+output_str = "\t\t\"date\": \"" + now_date + "\","
+print( output_str )
 print( "\t\t\"labels\": [" )
 
 start_flg = 0
@@ -251,7 +278,8 @@ print( "\t}," )
 #
 #
 #
-print( "\t\"lastUpdate\": \"2020\/04\/17 23:30\"," )
+output_str = "\t\"lastUpdate\": \"" + now_date + "\","
+print( output_str )
 print( "\t\"main_summary\": {" )
 print( "\t\t\"attr\": \"検査実施人数\"," )
 print( "\t\t\"value\": " + str(kensa) + "," )
