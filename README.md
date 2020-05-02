@@ -1,9 +1,12 @@
 # これは何？
 
-静岡県新型コロナウイルス対策サイトで利用するオープンデータを、対策サイトで扱えるデータ（data.json）に変換するスクリプトです
+[静岡県 新型コロナウイルス感染症対策サイト](https://stopcovid19.code4numazu.org/)で利用するオープンデータを、対策サイトで扱えるデータ（data.json）に変換するスクリプトです
+
+オープンデータのDL先: [新型コロナウイルス感染症県内感染動向 - 静岡県オープンデータ](https://opendata.pref.shizuoka.jp/dataset/8167.html)
 
 # 必要な物
 
+- macOS/linux環境を推奨(シェルスクリプトを利用しています)
 - Python: 3.7以降推奨
 - pipenv
 - 開発時利用モジュール
@@ -17,4 +20,3 @@
 $ pipenv install
 $ bash bat.sh
 # data.jsonが生成されます
-
