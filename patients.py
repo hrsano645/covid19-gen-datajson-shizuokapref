@@ -6,7 +6,6 @@ import sys
 from datetime import datetime
 from datetime import timedelta
 
-import re
 from collections import namedtuple
 
 # 置き換えルール:年代に分けられない情報を置き換えるルールセット
@@ -79,7 +78,7 @@ def main():
         date_month2 = "0" + str(date_month)
     date_day = dt_now.day
     if date_day < 10:
-        date_day2 = "0" + tr(date_day)
+        date_day2 = "0" + str(date_day)
 
     date_string = str(dt_now.year) + "-" + date_month2 + "-" + date_day2
 
