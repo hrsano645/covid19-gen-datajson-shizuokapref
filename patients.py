@@ -6,6 +6,9 @@ import sys
 from datetime import datetime
 from datetime import timedelta
 
+import re
+from collections import namedtuple
+
 # 置き換えルール:年代に分けられない情報を置き換えるルールセット
 #
 # ref:https://codefornumazu.slack.com/archives/C011YSQPQCA/p1587989876014200
@@ -24,27 +27,39 @@ from datetime import timedelta
 # ・不明（現時点ではこのケース無し）　⇒　不明（そのまま）
 # ・上記以外の記述が今後増えるかも…　⇒　NULL
 
+# 置き換えようのルールを用意
+ReplaceRule = namedtuple("ReplaceRule", ["pattern", "newstr"])
+
 NENDAI_REPLACE_RULE = [
-    ("高齢でない成人", ""),
-    ("高齢者", ""),
-    ("未成年（18歳未満）", ""),
-    ("若年者", ""),
-    ("小児", ""),
-    ("未就学児", "10歳未満"),
-    ("未就園児", "10歳未満"),
+    ReplaceRule("高齢でない成人", ""),
+    ReplaceRule("高齢者", ""),
+    ReplaceRule("未成年（18歳未満）", ""),
+    ReplaceRule("若年者", ""),
+    ReplaceRule("小児", ""),
+    ReplaceRule("未就学児", "10歳未満"),
+    ReplaceRule("未就園児", "10歳未満"),
+    ReplaceRule("10歳未満", "10歳未満"),
+    ReplaceRule("不明", "不明"),
 ]
 
 
 def replace_nendai_format(src: str):
     """
-    年代に対策サイト側で考慮されていない文字列がある場合に置き換え
+    年代に対策サイト側で考慮されていない文字列がある場合に置き換えを行う
     """
-    replaced_str = src
-    for replace_rule in NENDAI_REPLACE_RULE:
-        if src == replace_rule[0]:
-            replaced_str = src.replace(replace_rule[0], replace_rule[1])
-            break
-    return replaced_str
+
+    # *0代は正規のルールなので、スルーする
+    if "0代" in src:
+        return src
+
+    rule_pattern = [r_r.pattern for r_r in NENDAI_REPLACE_RULE]
+    # ルールにないものは空白
+    if src not in rule_pattern:
+        return ""
+    # ルールにあるものは置き換える
+    else:
+        target_rule = NENDAI_REPLACE_RULE[rule_pattern.index(src)]
+        return src.replace(target_rule.pattern, target_rule.newstr)
 
 
 def main():
