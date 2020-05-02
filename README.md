@@ -8,8 +8,8 @@
 
 - macOS/linux環境を推奨(シェルスクリプトを利用しています)
 - Python: 3.7以降推奨
-- pipenv
 - 開発時利用モジュール
+  - pipenv
   - pytest
   - flake8
   - black
@@ -17,6 +17,14 @@
 # 使い方
 
 ```bash
-$ pipenv install
 $ bash bat.sh
 # data.jsonが生成されます
+```
+
+# 開発方法
+
+pipenvを利用してください。pipenv上ではpython3.7を利用しています
+
+```bash
+$ pipenv install
+```
