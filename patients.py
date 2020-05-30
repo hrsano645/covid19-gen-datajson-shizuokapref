@@ -26,7 +26,9 @@ from collections import namedtuple
 # ・不明（現時点ではこのケース無し）　⇒　不明（そのまま）
 # ・上記以外の記述が今後増えるかも…　⇒　NULL
 
-# 置き換えようのルールを用意
+# 置き換えのルールを用意
+# ReplaceRule.pattern: 置き換え元の文字列パターン
+# ReplaceRule.newstr: 置き換えする文字列
 ReplaceRule = namedtuple("ReplaceRule", ["pattern", "newstr"])
 
 NENDAI_REPLACE_RULE = [
@@ -82,6 +84,7 @@ def main():
 
     date_string = str(dt_now.year) + "-" + date_month2 + "-" + date_day2
 
+    # data.json更新時のデータ
     now_date = str(dt_now.year) + "\/" + date_month2 + "\/" + date_day2 + " 19:30"
 
     end = datetime.strptime(tomorrow_str, "%Y-%m-%d").date()
@@ -103,7 +106,7 @@ def main():
 
     print("{")
 
-    # querents
+    # querents: 検査件数
     filename = "./" + args[3]
     print('\t"querents": {')
 
@@ -114,6 +117,7 @@ def main():
         reader = csv.reader(f3)
         header = next(reader)  # 読み込み
 
+        # 1行目かのフラグ
         start_flg = 0
 
         for row in reader:
