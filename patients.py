@@ -119,6 +119,11 @@ def main():
         for row in reader:
             date1 = row[0].split("/")
 
+            if date1[0] == "":
+                break
+
+            date1 = row[0].split("/")
+
             date20 = date1[0]
             if len(date1[1]) == 1:
                 date21 = "0" + date1[1]
@@ -223,6 +228,7 @@ def main():
                     zyusyo = zyusyo + 1
                 if row[10] == "死亡":
                     shibo = shibo + 1
+                    nyuin = nyuin - 1
 
             print(str2)
             str2 = '\t\t\t\t"date": ' + '"' + date3 + '"'
