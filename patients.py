@@ -121,47 +121,61 @@ def main():
         start_flg = 0
 
         for row in reader:
+
+            # ===[日付の正規化]===
+            # 日付を取り出す,splitして年月日に沸ける
             date1 = row[0].split("/")
 
+            # 日付:フォーマットが不正なら飛ばす
             if date1[0] == "":
                 break
 
+            # 日付:フォーマットを再度分解: 必要ないかも
             date1 = row[0].split("/")
 
+            # 日付:年
             date20 = date1[0]
+
+            # 日付: 月の文字列長さが1桁しかない場合は0埋めする
             if len(date1[1]) == 1:
                 date21 = "0" + date1[1]
             else:
                 date21 = date1[1]
 
+            # 日付: 日の文字列長さが1桁しかない場合は0埋めする
             if len(date1[2]) == 1:
                 date22 = "0" + date1[2]
             else:
                 date22 = date1[2]
+
+            # 日付を再構成
             date3 = date20 + "-" + date21 + "-" + date22
+            # short_dateを構成
             date4 = date21 + "\/" + date22
+            # ===[日付の正規化終わり]===
 
             if start_flg != 0:
                 print("\t\t\t,")
 
+            # 相談件数, 例外を考慮している？
             row[4] = row[4].replace(",", "")
 
             print("\t\t\t{")
             str2 = '\t\t\t\t"日付": ' + '"' + date3 + 'T08:00:00.000Z",'
             print(str2)
-            str2 = '\t\t\t\t"曜日": 0,'
+            str2 = '\t\t\t\t"曜日": 0,'  # メトロ版にある項目だが用途不明
             print(str2)
-            str2 = '\t\t\t\t"9-17時": ' + row[4] + ","
+            str2 = '\t\t\t\t"9-17時": ' + row[4] + ","  # 相談件数
             print(str2)
-            str2 = '\t\t\t\t"17-翌9時": 0,'
+            str2 = '\t\t\t\t"17-翌9時": 0,'  # ここは相談の受付時間から外れているので毎回0になる
             print(str2)
             str2 = '\t\t\t\t"date": ' + '"' + date3 + '",'
             print(str2)
-            str2 = '\t\t\t\t"w": 0,'
+            str2 = '\t\t\t\t"w": 0,'  # メトロ版にある項目だが用途不明
             print(str2)
             str2 = '\t\t\t\t"short_date": ' + '"' + date4 + '",'
             print(str2)
-            str2 = '\t\t\t\t"小計": ' + row[4]
+            str2 = '\t\t\t\t"小計": ' + row[4]  # 9-17時の部分と同じになる
             print(str2)
             print("\t\t\t}")
 
@@ -171,8 +185,9 @@ def main():
     print("\t},")
 
     #
-    # patients
+    # patients: 陽性者
     #
+
     filename = "./" + args[1]
     print('\t"patients": {')
     output_str = '\t\t"date": "' + now_date + '",'
@@ -191,6 +206,7 @@ def main():
 
             print("\t\t\t{")
 
+            # ===[日付の正規化]===
             date1 = row[4].split("/")
 
             date20 = date1[0]
@@ -205,6 +221,7 @@ def main():
                 date22 = date1[2]
 
             date3 = date20 + "-" + date21 + "-" + date22
+            # ===[日付の正規化終わり]===
 
             date_n.append(date3)
 
@@ -220,6 +237,7 @@ def main():
             str2 = '\t\t\t\t"性別": ' + '"' + row[8] + '",'
             print(str2)
 
+            # main_summaryの必要な数値もしている
             if row[13] == "1":
                 str2 = '\t\t\t\t"退院": ' + '"〇",'
                 taiin = taiin + 1
@@ -248,7 +266,7 @@ def main():
     print("\t},")
 
     #
-    # patients_summary
+    # patients_summary: 陽性者サマリー（人数
     #
     print('\t"patients_summary": {')
     output_str = '\t\t"date": "' + now_date + '",'
