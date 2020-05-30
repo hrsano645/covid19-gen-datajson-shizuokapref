@@ -82,6 +82,7 @@ def main():
     if date_day < 10:
         date_day2 = "0" + str(date_day)
 
+    # これは必要ないはず
     date_string = str(dt_now.year) + "-" + date_month2 + "-" + date_day2
 
     # data.json更新時のデータ
@@ -95,7 +96,7 @@ def main():
     filename = "./" + args[1]
 
     # 変数
-    date_n = []
+    date_n = []　# TODO:2020-05-30 現時点絵このリストが何かよくわかってない
     kensa = 0  # 検査実施人数
     kanzya = 0  # 陽性患者数
     nyuin = 0  # 入院中
