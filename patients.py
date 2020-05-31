@@ -429,7 +429,7 @@ def main():
     root_json["main_summary"].update(main_summary_root_json)
 
     with open("data_new.json", "w") as export_json:
-        json.dump(root_json, export_json, indent=4, ensure_ascii=False)
+        json.dump(root_json, export_json, indent="\t", ensure_ascii=False)
 
 
 if __name__ == "__main__":
