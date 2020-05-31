@@ -187,7 +187,7 @@ def main():
     filename = "./" + args[1]
 
     # 変数
-    date_n = []  # TODO:2020-05-30 現時でこのリストが何かよくわかってない
+    date_n = []  # 陽性者数をカウントする際に利用する
     kensa = 0  # 検査実施人数
     kanzya = 0  # 陽性患者数
     nyuin = 0  # 入院中
