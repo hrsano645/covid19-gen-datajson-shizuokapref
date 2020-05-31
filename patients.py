@@ -332,7 +332,7 @@ def main():
     #
     # patients_summary: 陽性者サマリー（人数
     #
-    
+
     # startからendまでの毎日の日付と、陽性者数の数を生成する
 
     # datetimesのstartからendまでのリストを生成
