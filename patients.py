@@ -347,8 +347,6 @@ def main():
     # data_n の個数でカウントして、count_listの個数をアップデートさせる
     patients_day_of_count_list.update(Counter(date_n))
 
-    # print(patients_day_of_count_list)
-
     patients_summary_data_list = list()
     for patients_day, patients_count in patients_day_of_count_list.items():
 
