@@ -412,19 +412,19 @@ def main():
     main_summary_d3 = main_summary_d2[0]["children"]
 
     # 検査実施人数
-    main_summary_root_json["value"] = str(kensa)
+    main_summary_root_json["value"] = kensa
     # 陽性患者数
-    main_summary_d1[0]["value"] = str(kanzya)
+    main_summary_d1[0]["value"] = kanzya
     # 入院中
-    main_summary_d2[0]["value"] = str(nyuin)
+    main_summary_d2[0]["value"] = nyuin
     # 軽症・中等症
-    main_summary_d3[0]["value"] = str(keisyo)
+    main_summary_d3[0]["value"] = keisyo
     # 重症
-    main_summary_d3[1]["value"] = str(zyusyo)
+    main_summary_d3[1]["value"] = zyusyo
     # 退院
-    main_summary_d2[1]["value"] = str(taiin)
+    main_summary_d2[1]["value"] = taiin
     # 死亡
-    main_summary_d2[2]["value"] = str(shibo)
+    main_summary_d2[2]["value"] = shibo
 
     root_json["main_summary"].update(main_summary_root_json)
 
