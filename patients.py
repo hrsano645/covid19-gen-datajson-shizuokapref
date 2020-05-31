@@ -1,4 +1,5 @@
 # coding:utf-8
+
 import csv
 import json
 import sys
@@ -364,114 +365,71 @@ def main():
     # ルートのpatients_summary > dataに結合する
     root_json["patients_summary"]["data"].extend(patients_summary_data_list)
 
-    with open("data_new.json", "w") as export_json:
-        json.dump(root_json, export_json, indent=4, ensure_ascii=False)
-
-    sys.exit(0)
-
-    def daterange(_start, _end):
-        for n in range((_end - _start).days):
-            yield _start + timedelta(n)
-
     #
     # inspection_persons
     #
     filename = "./" + args[2]
 
     # labelsを生成
+    root_json["inspection_persons"]["labels"].extend(
+        [d.strftime("%Y-%m-%d") + "T08:00:00.000Z" for d in date_list]
+    )
 
-    print('\t"inspection_persons": {')
-    output_str = '\t\t"date": "' + now_date + '",'
-    print(output_str)
-    print('\t\t"labels": [')
+    # datasets:検査実施人数 の生成
 
-    start_flg = 0
-    for i in daterange(start, end):
-        date_str2 = i.strftime("%Y-%m-%d")
-
-        if start_flg != 0:
-            print("\t\t\t\t,")
-
-        str2 = '\t\t\t\t"' + date_str2 + 'T08:00:00.000Z"'
-        print(str2)
-
-        start_flg = 1
-
-    print("\t\t],")
-    print('\t\t"datasets": [')
-    print("\t\t\t{")
-    print('\t\t\t\t"label": "検査実施人数",')
-    print('\t\t\t\t"data" : [')
-
+    inspection_persons_data_list = list()
     with open(filename, "r", encoding="shift-jis") as f2:
-        reader = csv.reader(f2)
-        header = next(reader)  # 読み込み
+        inspection_persons_csv = csv.DictReader(f2)
 
-        start_flg = 0
-        for row in reader:
-            if start_flg != 0:
-                str2 = "\t\t\t\t\t,"
-                print(str2)
+        for inspection_persons_row in inspection_persons_csv:
 
-            str2 = "\t\t\t\t\t" + row[4]
-            print(str2)
-            kensa = kensa + int(row[4])
+            inspection_persons_count = int(inspection_persons_row["検査実施_人数"])
+            inspection_persons_data_list.append(inspection_persons_count)
 
-            start_flg = 1
+            # main_summaryの数値も生成
+            kensa = kensa + inspection_persons_count
 
-    print("\t\t\t\t]")
-    print("\t\t\t}")
-    print("\t\t]")
-    print("\t},")
+    # 検査実施人数のjsonテンプレートを取得
+    inspection_persons_dataset_json = json.loads(
+        inspection_persons_dataset_json_template
+    )
 
-    #
-    #
-    #
-    output_str = '\t"lastUpdate": "' + now_date + '",'
-    print(output_str)
-    print('\t"main_summary": {')
-    print('\t\t"attr": "検査実施人数",')
-    print('\t\t"value": ' + str(kensa) + ",")
-    print('\t\t"children": [')
-    print("\t\t\t{")
-    print('\t\t\t\t"attr": "陽性患者数",')
-    str2 = '\t\t\t\t"value": ' + str(kanzya) + ","
-    print(str2)
-    str2 = '\t\t\t\t"children": ['
-    print(str2)
-    print("\t\t\t\t\t{")
-    print('\t\t\t\t\t\t"attr": "入院中",')
-    str2 = '\t\t\t\t\t\t"value": ' + str(nyuin) + ","
-    print(str2)
-    print('\t\t\t\t\t\t"children": [')
-    print("\t\t\t\t\t\t\t{")
-    print('\t\t\t\t\t\t\t\t"attr": "軽症・中等症",')
-    str2 = '\t\t\t\t\t\t\t\t"value": ' + str(keisyo)
-    print(str2)
-    print("\t\t\t\t\t\t\t},")
-    print("\t\t\t\t\t\t\t{")
-    print('\t\t\t\t\t\t\t\t"attr": "重症",')
-    str2 = '\t\t\t\t\t\t\t\t"value": ' + str(zyusyo)
-    print(str2)
-    print("\t\t\t\t\t\t\t}")
-    print("\t\t\t\t\t\t]")
-    print("\t\t\t\t\t},")
-    print("\t\t\t\t\t{")
-    print('\t\t\t\t\t\t"attr": "退院",')
-    str2 = '\t\t\t\t\t\t"value": ' + str(taiin)
-    print(str2)
-    print("\t\t\t\t\t},")
-    print("\t\t\t\t\t{")
-    print('\t\t\t\t\t\t"attr": "死亡",')
-    str2 = '\t\t\t\t\t\t"value": ' + str(shibo)
-    print(str2)
-    print("\t\t\t\t\t}")
-    print("\t\t\t\t]")
-    print("\t\t\t}")
-    print("\t\t]")
-    print("\t}")
+    inspection_persons_dataset_json["data"].extend(inspection_persons_data_list)
 
-    print("}")
+    root_json["inspection_persons"]["datasets"].append(inspection_persons_dataset_json)
+
+    # main_summaryを生成
+    # データがネスト構造なので、root>d1~d3まで名前をつけて構造を間違えないようにする
+
+    main_summary_root_json = json.loads(main_summary_json_template)
+
+    # ネスト構造に名前をつける
+    # 検査実施数のネスト
+    main_summary_d1 = main_summary_root_json["children"]
+    # 用患者数のネスト
+    main_summary_d2 = main_summary_d1[0]["children"]
+    # 入院中のネスト
+    main_summary_d3 = main_summary_d2[0]["children"]
+
+    # 検査実施人数
+    main_summary_root_json["value"] = str(kensa)
+    # 陽性患者数
+    main_summary_d1[0]["value"] = str(kanzya)
+    # 入院中
+    main_summary_d2[0]["value"] = str(nyuin)
+    # 軽症・中等症
+    main_summary_d3[0]["value"] = str(keisyo)
+    # 重症
+    main_summary_d3[1]["value"] = str(zyusyo)
+    # 退院
+    main_summary_d2[1]["value"] = str(taiin)
+    # 死亡
+    main_summary_d2[2]["value"] = str(shibo)
+
+    root_json["main_summary"].update(main_summary_root_json)
+
+    with open("data_new.json", "w") as export_json:
+        json.dump(root_json, export_json, indent=4, ensure_ascii=False)
 
 
 if __name__ == "__main__":
