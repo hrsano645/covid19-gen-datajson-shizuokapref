@@ -65,23 +65,23 @@ def replace_nendai_format(src: str):
 root_json_template = """
 {
     "querents": {
-        "date": "2020\/05\/30 19:30",
+        "date": "",
         "data": []
     },
     "patients": {
-        "date": "2020\/05\/30 19:30",
+        "date": "",
         "data": []
     },
     "patients_summary": {
-        "date": "2020\/05\/30 19:30",
+        "date": "",
         "data": []
     },
     "inspection_persons": {
-        "date": "2020\/05\/30 19:30",
+        "date": "",
         "labels": [],
         "datasets": []
     },
-    "lastUpdate": "2020\/05\/30 19:30",
+    "lastUpdate": "",
     "main_summary": {}
 }
 """
@@ -125,31 +125,31 @@ main_summary_json_template = """
 
 querents_data_json_template = """
 {
-    "日付": "2020-02-10T08:00:00.000Z",
+    "日付": "",
     "曜日": 0,
     "9-17時": 0,
     "17-翌9時": 0,
-    "date": "2020-02-10",
+    "date": "",
     "w": 0,
-    "short_date": "02\/10",
+    "short_date": "",
     "小計": 0
 }
 """
 
 patients_data_json_template = """
 {
-    "リリース日": "2020-02-28T08:00:00.000Z",
-    "居住地": "静岡市",
-    "年代": "60代",
-    "性別": "男性",
-    "退院": "〇",
-    "date": "2020-02-28"
+    "リリース日": "",
+    "居住地": "",
+    "年代": "",
+    "性別": "",
+    "退院": "",
+    "date": ""
 }
 """
 
 patients_summary_data_json_template = """
 {
-    "日付": "2020-01-22T08:00:00.000Z",
+    "日付": "",
     "小計": 0
 }
 """
@@ -157,9 +157,7 @@ patients_summary_data_json_template = """
 inspection_persons_dataset_json_template = """
 {
     "label": "検査実施人数",
-    "data": [
-        0
-    ]
+    "data": []
 }
 """
 
