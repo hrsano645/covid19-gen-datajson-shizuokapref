@@ -171,10 +171,10 @@ def main():
     dt_now = datetime.now()
     start = datetime.strptime("2020-01-22", "%Y-%m-%d").date()
 
-    latest_datetime = dt_now.replace(hour=19, minute=30, second=0, microsecond=0)
+    last_datetime = dt_now.replace(hour=19, minute=30, second=0, microsecond=0)
 
     # data_jsonの更新日
-    now_date = latest_datetime.strftime("%Y/%m/%d %H:%M")
+    now_date = last_datetime.strftime("%Y/%m/%d %H:%M")
 
     tomorrow = dt_now + timedelta(days=1)
 
@@ -206,6 +206,7 @@ def main():
     root_json["patients"]["date"] = now_date
     root_json["patients_summary"]["date"] = now_date
     root_json["inspection_persons"]["date"] = now_date
+    root_json["lastUpdate"] = now_date
 
     # querents: 検査件数
 
