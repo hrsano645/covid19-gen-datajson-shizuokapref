@@ -1,5 +1,5 @@
 # coding:utf-8
-
+import re
 import csv
 import json
 import sys
@@ -161,6 +161,25 @@ def replace_nendai_format(src: str):
         return src.replace(target_rule.pattern, target_rule.newstr)
 
 
+def varidate_opendata_dateformat(opendata_date_str):
+    """
+    オープンデータの日付が正しいフォーマットか検証する
+    正しいフォーマットならtupleで（year, month, day)を出力する。
+    そうでなければNoneを返す
+    """
+
+    # 日付の正規化
+
+    dateformat_pattern = re.compile(r"(\d{4})\/(\d{1,2})\/(\d{1,2})")
+
+    validate_result = dateformat_pattern.match(opendata_date_str)
+
+    if not validate_result:
+        return None
+    else:
+        result_ymd = validate_result.groups()
+        return (result_ymd[0], result_ymd[1], result_ymd[2])
+
 def main():
 
     # 時間関係の生成
@@ -219,17 +238,18 @@ def main():
         for call_center_row in call_center_csv:
 
             # 日付の正規化
-            # TODO:2020-05-30 ここはreでちゃんとバリデーションしておく
-            call_center_row_date_str = call_center_row["受付_年月日"].split("/")
 
-            # 日付:フォーマットが不正なら飛ばす
-            if call_center_row_date_str[0] == "":
+            varidate_result_date = varidate_opendata_dateformat(
+                call_center_row["受付_年月日"]
+            )
+
+            if not varidate_result_date:
                 break
 
             querent_date = datetime(
-                year=int(call_center_row_date_str[0]),
-                month=int(call_center_row_date_str[1]),
-                day=int(call_center_row_date_str[2]),
+                year=int(varidate_result_date[0]),
+                month=int(varidate_result_date[1]),
+                day=int(varidate_result_date[2]),
             )
 
             # jsonの"日付"を生成
@@ -274,17 +294,15 @@ def main():
         for patients_row in patients_csv:
 
             # 日付の正規化
-            # TODO:2020-05-30 ここはreでちゃんとバリデーションしておく
-            patients_row_date_str = patients_row["公表_年月日"].split("/")
+            varidate_result_date = varidate_opendata_dateformat(patients_row["公表_年月日"])
 
-            # 日付:フォーマットが不正なら飛ばす
-            if patients_row_date_str[0] == "":
+            if not varidate_result_date:
                 break
 
             patients_date = datetime(
-                year=int(patients_row_date_str[0]),
-                month=int(patients_row_date_str[1]),
-                day=int(patients_row_date_str[2]),
+                year=int(varidate_result_date[0]),
+                month=int(varidate_result_date[1]),
+                day=int(varidate_result_date[2]),
             )
 
             # jsonの"リリース日"を生成
