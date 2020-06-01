@@ -1,32 +1,113 @@
 # coding:utf-8
+import re
 import csv
-
-# import random
+import json
 import sys
-from datetime import datetime
-from datetime import timedelta
+from collections import Counter, namedtuple
+from datetime import datetime, timedelta
 
-from collections import namedtuple
 
-# 置き換えルール:年代に分けられない情報を置き換えるルールセット
-#
-# ref:https://codefornumazu.slack.com/archives/C011YSQPQCA/p1587989876014200
-# 考え方：元の情報でオープンデータ項目定義書に当てはまるものがあれば、それに置き換える。当てはまるものがないものはNULL（空欄）とする。
-# その結果、
-# ・高齢でない成人　　⇒　NULL
-# ・高齢者　　　　　　⇒　NULL
-# ・未成年（18歳未満）⇒　NULL
-# ・若年者　　　　　　⇒　NULL
-# ・小児　　　　　　　⇒　NULL
-# ・未就学児　　　　　⇒　10歳未満
-# ・未就園児　　　　　⇒　10歳未満
-# ・10歳未満　　　　　⇒　10歳未満（そのまま）
-# ・〇0代　　　　　　⇒　〇0代（そのまま）
-# ・NULL　　　　　　　⇒　NULL（そのまま）
-# ・不明（現時点ではこのケース無し）　⇒　不明（そのまま）
-# ・上記以外の記述が今後増えるかも…　⇒　NULL
+# data.jsonのテンプレート
+ROOT_JSON_TEMPLATE = """
+{
+    "querents": {
+        "date": "",
+        "data": []
+    },
+    "patients": {
+        "date": "",
+        "data": []
+    },
+    "patients_summary": {
+        "date": "",
+        "data": []
+    },
+    "inspection_persons": {
+        "date": "",
+        "labels": [],
+        "datasets": []
+    },
+    "lastUpdate": "",
+    "main_summary": {}
+}
+"""
 
-# 置き換えようのルールを用意
+MAIN_SUMMARY_JSON_TEMPLATE = """
+{
+    "attr": "検査実施人数",
+    "value": 0,
+    "children": [
+        {
+            "attr": "陽性患者数",
+            "value": 0,
+            "children": [
+                {
+                    "attr": "入院中",
+                    "value": 0,
+                    "children": [
+                        {
+                            "attr": "軽症・中等症",
+                            "value": 0
+                        },
+                        {
+                            "attr": "重症",
+                            "value": 0
+                        }
+                    ]
+                },
+                {
+                    "attr": "退院",
+                    "value": 0
+                },
+                {
+                    "attr": "死亡",
+                    "value": 0
+                }
+            ]
+        }
+    ]
+}
+"""
+
+QUERENTS_DATA_JSON_TEMPLATE = """
+{
+    "日付": "",
+    "曜日": 0,
+    "9-17時": 0,
+    "17-翌9時": 0,
+    "date": "",
+    "w": 0,
+    "short_date": "",
+    "小計": 0
+}
+"""
+
+PATIENTS_DATA_JSON_TEMPLATE = """
+{
+    "リリース日": "",
+    "居住地": "",
+    "年代": "",
+    "性別": "",
+    "退院": "",
+    "date": ""
+}
+"""
+
+PATIENTS_SUMMARY_DATA_JSON_TEMPLATE = """
+{
+    "日付": "",
+    "小計": 0
+}
+"""
+
+INSPECTION_PERSONS_DATASET_JSON_TEMPLATE = """
+{
+    "label": "検査実施人数",
+    "data": []
+}
+"""
+
+# 置き換え用のルールを用意
 ReplaceRule = namedtuple("ReplaceRule", ["pattern", "newstr"])
 
 NENDAI_REPLACE_RULE = [
@@ -45,6 +126,25 @@ NENDAI_REPLACE_RULE = [
 def replace_nendai_format(src: str):
     """
     年代に対策サイト側で考慮されていない文字列がある場合に置き換えを行う
+
+    NENDAI_REPLACE_RULE: 置き換えルール:年代に分けられない情報を置き換えるルールセット
+
+    ref:https://codefornumazu.slack.com/archives/C011YSQPQCA/p1587989876014200
+    考え方：元の情報でオープンデータ項目定義書に当てはまるものがあれば、それに置き換える。当てはまるものがないものはNULL（空欄）とする。
+    その結果、
+    ・高齢でない成人　　⇒　NULL
+    ・高齢者　　　　　　⇒　NULL
+    ・未成年（18歳未満）⇒　NULL
+    ・若年者　　　　　　⇒　NULL
+    ・小児　　　　　　　⇒　NULL
+    ・未就学児　　　　　⇒　10歳未満
+    ・未就園児　　　　　⇒　10歳未満
+    ・10歳未満　　　　　⇒　10歳未満（そのまま）
+    ・〇0代　　　　　　⇒　〇0代（そのまま）
+    ・NULL　　　　　　　⇒　NULL（そのまま）
+    ・不明（現時点ではこのケース無し）　⇒　不明（そのまま）
+    ・上記以外の記述が今後増えるかも…　⇒　NULL
+
     """
 
     # *0代は正規のルールなので、スルーする
@@ -61,38 +161,55 @@ def replace_nendai_format(src: str):
         return src.replace(target_rule.pattern, target_rule.newstr)
 
 
+def varidate_opendata_dateformat(opendata_date_str):
+    """
+    オープンデータの日付が正しいフォーマットか検証する
+    正しいフォーマットならtupleで（year, month, day)を出力する。
+    そうでなければNoneを返す
+    """
+
+    # 日付の正規化
+
+    dateformat_pattern = re.compile(r"(\d{4})\/(\d{1,2})\/(\d{1,2})")
+
+    validate_result = dateformat_pattern.match(opendata_date_str)
+
+    if not validate_result:
+        return None
+    else:
+        result_ymd = validate_result.groups()
+        return (result_ymd[0], result_ymd[1], result_ymd[2])
+
+
+def generate_root_json():
+    pass
+
+
 def main():
+
     # 時間関係の生成
+
     dt_now = datetime.now()
     start = datetime.strptime("2020-01-22", "%Y-%m-%d").date()
 
-    date_month = dt_now.month
-    date_day = dt_now.day
-    date_month2 = str(date_month)
-    date_day2 = str(date_day)
+    last_datetime = dt_now.replace(hour=19, minute=30, second=0, microsecond=0)
+
+    # data_jsonの更新日
+    now_date = last_datetime.strftime("%Y/%m/%d %H:%M")
 
     tomorrow = dt_now + timedelta(days=1)
-    tomorrow_str = datetime.strftime(tomorrow, "%Y-%m-%d")
 
-    if date_month < 10:
-        date_month2 = "0" + str(date_month)
-    date_day = dt_now.day
-    if date_day < 10:
-        date_day2 = "0" + str(date_day)
-
-    date_string = str(dt_now.year) + "-" + date_month2 + "-" + date_day2
-
-    now_date = str(dt_now.year) + "\/" + date_month2 + "\/" + date_day2 + " 19:30"
-
-    end = datetime.strptime(tomorrow_str, "%Y-%m-%d").date()
+    # 何らかの終了日？ # TODO:2020-05-30 調査必要
+    end = tomorrow.date()
 
     # 引数からファイル名を取得
     args = sys.argv
+    call_center_filename = "./" + args[3]
+    patients_filename = "./" + args[1]
+    test_people_filename = "./" + args[2]
 
-    filename = "./" + args[1]
-
-    # 変数
-    date_n = []
+    # main_summary用の変数
+    date_n = []  # 陽性者数をカウントする際に利用する
     kensa = 0  # 検査実施人数
     kanzya = 0  # 陽性患者数
     nyuin = 0  # 入院中
@@ -101,277 +218,233 @@ def main():
     taiin = 0  # 退院
     shibo = 0  # 死亡
 
-    print("{")
+    # data.jsonルートのデータ構造を取得
+    root_json = json.loads(ROOT_JSON_TEMPLATE)
 
-    # querents
-    filename = "./" + args[3]
-    print('\t"querents": {')
+    # 各データの更新日を設定
+    root_json["querents"]["date"] = now_date
+    root_json["patients"]["date"] = now_date
+    root_json["patients_summary"]["date"] = now_date
+    root_json["inspection_persons"]["date"] = now_date
+    root_json["lastUpdate"] = now_date
 
-    output_str = '\t\t"date": "' + now_date + '",'
-    print(output_str)
-    print('\t\t"data": [')
-    with open(filename, "r", encoding="shift-jis") as f3:
-        reader = csv.reader(f3)
-        header = next(reader)  # 読み込み
+    #
+    # querents: 検査件数
+    #
 
-        start_flg = 0
+    querent_data_list = list()
+    with open(call_center_filename, "r", encoding="shift-jis") as call_center_file:
+        call_center_csv = csv.DictReader(call_center_file)
 
-        for row in reader:
-            date1 = row[0].split("/")
+        for call_center_row in call_center_csv:
 
-            date20 = date1[0]
-            if len(date1[1]) == 1:
-                date21 = "0" + date1[1]
+            # 日付の正規化
+
+            varidate_result_date = varidate_opendata_dateformat(
+                call_center_row["受付_年月日"]
+            )
+
+            if not varidate_result_date:
+                break
+
+            querent_date = datetime(
+                year=int(varidate_result_date[0]),
+                month=int(varidate_result_date[1]),
+                day=int(varidate_result_date[2]),
+            )
+
+            # jsonの"日付"を生成
+            querent_hiduke_jsonstr = (
+                querent_date.strftime("%Y-%m-%d") + "T08:00:00.000Z"
+            )
+            # jsonの"date"
+            querent_date_jsonstr = querent_date.strftime("%Y-%m-%d")
+            # jsonの"short_date"を生成
+            querent_short_date_jsonstr = querent_date.strftime("%m/%d")
+
+            querent_row_soudankensu = int(call_center_row["相談件数"].replace(",", ""))
+
+            # querents > dataのデータを生成
+            querents_data_json = json.loads(QUERENTS_DATA_JSON_TEMPLATE)
+
+            querents_data_json["日付"] = querent_hiduke_jsonstr
+            querents_data_json["曜日"] = 0
+            querents_data_json["9-17時"] = querent_row_soudankensu
+            querents_data_json["17-翌9時"] = 0
+            querents_data_json["date"] = querent_date_jsonstr
+            querents_data_json["w"] = 0
+            querents_data_json["short_date"] = querent_short_date_jsonstr
+            querents_data_json["小計"] = querent_row_soudankensu
+
+            querent_data_list.append(querents_data_json)
+
+    # ルートのquerents > dataに結合する
+    root_json["querents"]["data"].extend(querent_data_list)
+
+    #
+    # patients: 陽性者
+    #
+
+    patients_data_list = list()
+    with open(patients_filename, "r", encoding="shift-jis") as patients_file:
+        patients_csv = csv.DictReader(patients_file)
+
+        for patients_row in patients_csv:
+
+            # 日付の正規化
+            varidate_result_date = varidate_opendata_dateformat(patients_row["公表_年月日"])
+
+            if not varidate_result_date:
+                break
+
+            patients_date = datetime(
+                year=int(varidate_result_date[0]),
+                month=int(varidate_result_date[1]),
+                day=int(varidate_result_date[2]),
+            )
+
+            # jsonの"リリース日"を生成
+            patients_release_date_jsonstr = (
+                patients_date.strftime("%Y-%m-%d") + "T08:00:00.000Z"
+            )
+            # jsonの"date"
+            patients_date_jsonstr = patients_date.strftime("%Y-%m-%d")
+
+            # data_nに個数追加
+            date_n.append(patients_date_jsonstr)
+
+            patients_data_json = json.loads(PATIENTS_DATA_JSON_TEMPLATE)
+
+            patients_data_json["リリース日"] = patients_release_date_jsonstr
+            patients_data_json["居住地"] = patients_row["患者_居住地"]
+            patients_data_json["年代"] = replace_nendai_format(patients_row["患者_年代"])
+            patients_data_json["性別"] = patients_row["患者_性別"]
+
+            # main_summary の必要な情報も取得している
+            if patients_row["患者_退院済フラグ"] == "1":
+                patients_data_json["退院"] = "〇"
+                taiin += 1
             else:
-                date21 = date1[1]
+                patients_data_json["退院"] = ""
+                nyuin += 1
 
-            if len(date1[2]) == 1:
-                date22 = "0" + date1[2]
-            else:
-                date22 = date1[2]
-            date3 = date20 + "-" + date21 + "-" + date22
-            date4 = date21 + "\/" + date22
+                if patients_row["患者_状態"] == "軽症・中等症":
+                    keisyo += 1
+                if patients_row["患者_状態"] == "重症":
+                    zyusyo += 1
+                if patients_row["患者_状態"] == "死亡":
+                    shibo += 1
+                    nyuin -= 1
 
-            if start_flg != 0:
-                print("\t\t\t,")
+            patients_data_json["date"] = patients_date_jsonstr
 
-            row[4] = row[4].replace(",", "")
+            kanzya += 1
+            patients_data_list.append(patients_data_json)
 
-            print("\t\t\t{")
-            str2 = '\t\t\t\t"日付": ' + '"' + date3 + 'T08:00:00.000Z",'
-            print(str2)
-            str2 = '\t\t\t\t"曜日": 0,'
-            print(str2)
-            str2 = '\t\t\t\t"9-17時": ' + row[4] + ","
-            print(str2)
-            str2 = '\t\t\t\t"17-翌9時": 0,'
-            print(str2)
-            str2 = '\t\t\t\t"date": ' + '"' + date3 + '",'
-            print(str2)
-            str2 = '\t\t\t\t"w": 0,'
-            print(str2)
-            str2 = '\t\t\t\t"short_date": ' + '"' + date4 + '",'
-            print(str2)
-            str2 = '\t\t\t\t"小計": ' + row[4]
-            print(str2)
-            print("\t\t\t}")
-
-            start_flg = 1
-
-    print("\t\t]")
-    print("\t},")
+    # ルートのpatients > dataに結合する
+    root_json["patients"]["data"].extend(patients_data_list)
 
     #
-    # patients
+    # patients_summary: 陽性者サマリー（人数
     #
-    filename = "./" + args[1]
-    print('\t"patients": {')
-    output_str = '\t\t"date": "' + now_date + '",'
-    print(output_str)
-    print('\t\t"data": [')
 
-    with open(filename, "r", encoding="shift-jis") as f:
-        reader = csv.reader(f)
-        header = next(reader)  # 読み込み
+    # startからendまでの毎日の日付と、陽性者数の数を生成する
 
-        start_flg = 0
+    # datetimesのstartからendまでのリストを生成
+    # TODO:2020-05-31 これは後でも使うので、最初に生成したほうがいいと思う
+    date_list = [start + timedelta(days=n) for n in range((end - start).days)]
 
-        for row in reader:
-            if start_flg != 0:
-                print("\t\t\t,")
+    # 毎日の日付を生成, 数は0で初期化
+    patients_day_of_count_list = {d.strftime("%Y-%m-%d"): 0 for d in date_list}
 
-            print("\t\t\t{")
+    # data_n の個数でカウントして、count_listの個数をアップデートさせる
+    patients_day_of_count_list.update(Counter(date_n))
 
-            date1 = row[4].split("/")
+    patients_summary_data_list = list()
+    for patients_day, patients_count in patients_day_of_count_list.items():
 
-            date20 = date1[0]
-            if len(date1[1]) == 1:
-                date21 = "0" + date1[1]
-            else:
-                date21 = date1[1]
+        # TODO:2020-05-31 わかりづらいので、data_nに入るオブジェクトはdatetimeがいいかも
+        patients_hiduke_jsonstr = patients_day + "T08:00:00.000Z"
 
-            if len(date1[2]) == 1:
-                date22 = "0" + date1[2]
-            else:
-                date22 = date1[2]
+        # dataの構造を読み込んで生成する
+        patients_summary_data_json = json.loads(PATIENTS_SUMMARY_DATA_JSON_TEMPLATE)
 
-            date3 = date20 + "-" + date21 + "-" + date22
+        patients_summary_data_json["日付"] = patients_hiduke_jsonstr
+        patients_summary_data_json["小計"] = patients_count
 
-            date_n.append(date3)
+        patients_summary_data_list.append(patients_summary_data_json)
 
-            str2 = '\t\t\t\t"リリース日": ' + '"' + date3 + 'T08:00:00.000Z",'
-            print(str2)
-            str2 = '\t\t\t\t"居住地": ' + '"' + row[6] + '",'
-            print(str2)
-
-            # str2 = '\t\t\t\t"年代": ' + '"' + row[7] + '",'
-            # print(str2)
-            str2 = '\t\t\t\t"年代": ' + '"' + replace_nendai_format(row[7]) + '",'
-            print(str2)
-            str2 = '\t\t\t\t"性別": ' + '"' + row[8] + '",'
-            print(str2)
-
-            if row[13] == "1":
-                str2 = '\t\t\t\t"退院": ' + '"〇",'
-                taiin = taiin + 1
-            else:
-                str2 = '\t\t\t\t"退院": ' + '"",'
-                nyuin = nyuin + 1
-                if row[10] == "軽症・中等症":
-                    keisyo = keisyo + 1
-                if row[10] == "重症":
-                    zyusyo = zyusyo + 1
-                if row[10] == "死亡":
-                    shibo = shibo + 1
-
-            print(str2)
-            str2 = '\t\t\t\t"date": ' + '"' + date3 + '"'
-            print(str2)
-
-            print("\t\t\t}")
-
-            kanzya = kanzya + 1
-
-            start_flg = 1
-
-    print("\t\t]")
-    print("\t},")
+    # ルートのpatients_summary > dataに結合する
+    root_json["patients_summary"]["data"].extend(patients_summary_data_list)
 
     #
-    # patients_summary
+    # inspection_persons: 検査実施人数
     #
-    print('\t"patients_summary": {')
-    output_str = '\t\t"date": "' + now_date + '",'
-    print(output_str)
-    print('\t\t"data": [')
 
-    def daterange(_start, _end):
-        for n in range((_end - _start).days):
-            yield _start + timedelta(n)
+    # labelsを生成
+    root_json["inspection_persons"]["labels"].extend(
+        [d.strftime("%Y-%m-%d") + "T08:00:00.000Z" for d in date_list]
+    )
 
-    start_flg = 0
+    # datasets:検査実施人数 の生成
+    inspection_persons_data_list = list()
+    with open(test_people_filename, "r", encoding="shift-jis") as test_people_file:
+        inspection_persons_csv = csv.DictReader(test_people_file)
 
-    for i in daterange(start, end):
-        date_str2 = i.strftime("%Y-%m-%d")
-        count = 0
-        for date_str in date_n:
-            # 一致する文字数をカウント
-            if date_str2 == date_str:
-                count = count + 1
+        for inspection_persons_row in inspection_persons_csv:
 
-        if start_flg != 0:
-            print("\t\t\t,")
+            inspection_persons_count = int(inspection_persons_row["検査実施_人数"])
+            inspection_persons_data_list.append(inspection_persons_count)
 
-        print("\t\t\t{")
-        str2 = '\t\t\t\t"日付" : "' + date_str2 + 'T08:00:00.000Z",'
-        print(str2)
-        str2 = '\t\t\t\t"小計" : ' + str(count)
-        print(str2)
-        print("\t\t\t}")
+            # main_summaryの数値も生成
+            kensa = kensa + inspection_persons_count
 
-        start_flg = 1
-    #   print (i)
+    # 検査実施人数のjsonテンプレートを取得
+    inspection_persons_dataset_json = json.loads(
+        INSPECTION_PERSONS_DATASET_JSON_TEMPLATE
+    )
 
-    print("\t\t]")
-    print("\t},")
+    # datasetのdataを更新
+    inspection_persons_dataset_json["data"].extend(inspection_persons_data_list)
+
+    # ルートのinspection_persons > datasetsに追加
+    root_json["inspection_persons"]["datasets"].append(inspection_persons_dataset_json)
 
     #
-    # inspection_persons
+    # main_summary
     #
-    filename = "./" + args[2]
 
-    print('\t"inspection_persons": {')
-    output_str = '\t\t"date": "' + now_date + '",'
-    print(output_str)
-    print('\t\t"labels": [')
+    main_summary_root_json = json.loads(MAIN_SUMMARY_JSON_TEMPLATE)
 
-    start_flg = 0
-    for i in daterange(start, end):
-        date_str2 = i.strftime("%Y-%m-%d")
+    # データがネスト構造なので、root>d1~d3まで名前をつけて構造を間違えないようにする
+    # 検査実施数のネスト
+    main_summary_d1 = main_summary_root_json["children"]
+    # 用患者数のネスト
+    main_summary_d2 = main_summary_d1[0]["children"]
+    # 入院中のネスト
+    main_summary_d3 = main_summary_d2[0]["children"]
 
-        if start_flg != 0:
-            print("\t\t\t\t,")
+    # 検査実施人数
+    main_summary_root_json["value"] = kensa
+    # 陽性患者数
+    main_summary_d1[0]["value"] = kanzya
+    # 入院中
+    main_summary_d2[0]["value"] = nyuin
+    # 軽症・中等症
+    main_summary_d3[0]["value"] = keisyo
+    # 重症
+    main_summary_d3[1]["value"] = zyusyo
+    # 退院
+    main_summary_d2[1]["value"] = taiin
+    # 死亡
+    main_summary_d2[2]["value"] = shibo
 
-        str2 = '\t\t\t\t"' + date_str2 + 'T08:00:00.000Z"'
-        print(str2)
+    # ルートのmain_summaryに結合する
+    root_json["main_summary"].update(main_summary_root_json)
 
-        start_flg = 1
-
-    print("\t\t],")
-    print('\t\t"datasets": [')
-    print("\t\t\t{")
-    print('\t\t\t\t"label": "検査実施人数",')
-    print('\t\t\t\t"data" : [')
-
-    with open(filename, "r", encoding="shift-jis") as f2:
-        reader = csv.reader(f2)
-        header = next(reader)  # 読み込み
-
-        start_flg = 0
-        for row in reader:
-            if start_flg != 0:
-                str2 = "\t\t\t\t\t,"
-                print(str2)
-
-            str2 = "\t\t\t\t\t" + row[4]
-            print(str2)
-            kensa = kensa + int(row[4])
-
-            start_flg = 1
-
-    print("\t\t\t\t]")
-    print("\t\t\t}")
-    print("\t\t]")
-    print("\t},")
-
-    #
-    #
-    #
-    output_str = '\t"lastUpdate": "' + now_date + '",'
-    print(output_str)
-    print('\t"main_summary": {')
-    print('\t\t"attr": "検査実施人数",')
-    print('\t\t"value": ' + str(kensa) + ",")
-    print('\t\t"children": [')
-    print("\t\t\t{")
-    print('\t\t\t\t"attr": "陽性患者数",')
-    str2 = '\t\t\t\t"value": ' + str(kanzya) + ","
-    print(str2)
-    str2 = '\t\t\t\t"children": ['
-    print(str2)
-    print("\t\t\t\t\t{")
-    print('\t\t\t\t\t\t"attr": "入院中",')
-    str2 = '\t\t\t\t\t\t"value": ' + str(nyuin) + ","
-    print(str2)
-    print('\t\t\t\t\t\t"children": [')
-    print("\t\t\t\t\t\t\t{")
-    print('\t\t\t\t\t\t\t\t"attr": "軽症・中等症",')
-    str2 = '\t\t\t\t\t\t\t\t"value": ' + str(keisyo)
-    print(str2)
-    print("\t\t\t\t\t\t\t},")
-    print("\t\t\t\t\t\t\t{")
-    print('\t\t\t\t\t\t\t\t"attr": "重症",')
-    str2 = '\t\t\t\t\t\t\t\t"value": ' + str(zyusyo)
-    print(str2)
-    print("\t\t\t\t\t\t\t}")
-    print("\t\t\t\t\t\t]")
-    print("\t\t\t\t\t},")
-    print("\t\t\t\t\t{")
-    print('\t\t\t\t\t\t"attr": "退院",')
-    str2 = '\t\t\t\t\t\t"value": ' + str(taiin)
-    print(str2)
-    print("\t\t\t\t\t},")
-    print("\t\t\t\t\t{")
-    print('\t\t\t\t\t\t"attr": "死亡",')
-    str2 = '\t\t\t\t\t\t"value": ' + str(shibo)
-    print(str2)
-    print("\t\t\t\t\t}")
-    print("\t\t\t\t]")
-    print("\t\t\t}")
-    print("\t\t]")
-    print("\t}")
-
-    print("}")
+    # data.jsonを生成する
+    with open("data_new.json", "w") as export_json:
+        json.dump(root_json, export_json, indent="\t", ensure_ascii=False)
 
 
 if __name__ == "__main__":
