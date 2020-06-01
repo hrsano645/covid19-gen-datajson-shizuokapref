@@ -6,62 +6,8 @@ import sys
 from collections import Counter, namedtuple
 from datetime import datetime, timedelta
 
-# 置き換え用のルールを用意
-ReplaceRule = namedtuple("ReplaceRule", ["pattern", "newstr"])
 
-NENDAI_REPLACE_RULE = [
-    ReplaceRule("高齢でない成人", ""),
-    ReplaceRule("高齢者", ""),
-    ReplaceRule("未成年（18歳未満）", ""),
-    ReplaceRule("若年者", ""),
-    ReplaceRule("小児", ""),
-    ReplaceRule("未就学児", "10歳未満"),
-    ReplaceRule("未就園児", "10歳未満"),
-    ReplaceRule("10歳未満", "10歳未満"),
-    ReplaceRule("不明", "不明"),
-]
-
-
-def replace_nendai_format(src: str):
-    """
-    年代に対策サイト側で考慮されていない文字列がある場合に置き換えを行う
-
-    NENDAI_REPLACE_RULE: 置き換えルール:年代に分けられない情報を置き換えるルールセット
-
-    ref:https://codefornumazu.slack.com/archives/C011YSQPQCA/p1587989876014200
-    考え方：元の情報でオープンデータ項目定義書に当てはまるものがあれば、それに置き換える。当てはまるものがないものはNULL（空欄）とする。
-    その結果、
-    ・高齢でない成人　　⇒　NULL
-    ・高齢者　　　　　　⇒　NULL
-    ・未成年（18歳未満）⇒　NULL
-    ・若年者　　　　　　⇒　NULL
-    ・小児　　　　　　　⇒　NULL
-    ・未就学児　　　　　⇒　10歳未満
-    ・未就園児　　　　　⇒　10歳未満
-    ・10歳未満　　　　　⇒　10歳未満（そのまま）
-    ・〇0代　　　　　　⇒　〇0代（そのまま）
-    ・NULL　　　　　　　⇒　NULL（そのまま）
-    ・不明（現時点ではこのケース無し）　⇒　不明（そのまま）
-    ・上記以外の記述が今後増えるかも…　⇒　NULL
-
-    """
-
-    # *0代は正規のルールなので、スルーする
-    if "0代" in src:
-        return src
-
-    rule_pattern = [r_r.pattern for r_r in NENDAI_REPLACE_RULE]
-    # ルールにないものは空白
-    if src not in rule_pattern:
-        return ""
-    # ルールにあるものは置き換える
-    else:
-        target_rule = NENDAI_REPLACE_RULE[rule_pattern.index(src)]
-        return src.replace(target_rule.pattern, target_rule.newstr)
-
-
-# jsonのテンプレート
-
+# data.jsonのテンプレート
 ROOT_JSON_TEMPLATE = """
 {
     "querents": {
@@ -160,6 +106,59 @@ INSPECTION_PERSONS_DATASET_JSON_TEMPLATE = """
     "data": []
 }
 """
+
+# 置き換え用のルールを用意
+ReplaceRule = namedtuple("ReplaceRule", ["pattern", "newstr"])
+
+NENDAI_REPLACE_RULE = [
+    ReplaceRule("高齢でない成人", ""),
+    ReplaceRule("高齢者", ""),
+    ReplaceRule("未成年（18歳未満）", ""),
+    ReplaceRule("若年者", ""),
+    ReplaceRule("小児", ""),
+    ReplaceRule("未就学児", "10歳未満"),
+    ReplaceRule("未就園児", "10歳未満"),
+    ReplaceRule("10歳未満", "10歳未満"),
+    ReplaceRule("不明", "不明"),
+]
+
+
+def replace_nendai_format(src: str):
+    """
+    年代に対策サイト側で考慮されていない文字列がある場合に置き換えを行う
+
+    NENDAI_REPLACE_RULE: 置き換えルール:年代に分けられない情報を置き換えるルールセット
+
+    ref:https://codefornumazu.slack.com/archives/C011YSQPQCA/p1587989876014200
+    考え方：元の情報でオープンデータ項目定義書に当てはまるものがあれば、それに置き換える。当てはまるものがないものはNULL（空欄）とする。
+    その結果、
+    ・高齢でない成人　　⇒　NULL
+    ・高齢者　　　　　　⇒　NULL
+    ・未成年（18歳未満）⇒　NULL
+    ・若年者　　　　　　⇒　NULL
+    ・小児　　　　　　　⇒　NULL
+    ・未就学児　　　　　⇒　10歳未満
+    ・未就園児　　　　　⇒　10歳未満
+    ・10歳未満　　　　　⇒　10歳未満（そのまま）
+    ・〇0代　　　　　　⇒　〇0代（そのまま）
+    ・NULL　　　　　　　⇒　NULL（そのまま）
+    ・不明（現時点ではこのケース無し）　⇒　不明（そのまま）
+    ・上記以外の記述が今後増えるかも…　⇒　NULL
+
+    """
+
+    # *0代は正規のルールなので、スルーする
+    if "0代" in src:
+        return src
+
+    rule_pattern = [r_r.pattern for r_r in NENDAI_REPLACE_RULE]
+    # ルールにないものは空白
+    if src not in rule_pattern:
+        return ""
+    # ルールにあるものは置き換える
+    else:
+        target_rule = NENDAI_REPLACE_RULE[rule_pattern.index(src)]
+        return src.replace(target_rule.pattern, target_rule.newstr)
 
 
 def main():
