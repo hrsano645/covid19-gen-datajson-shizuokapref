@@ -443,7 +443,7 @@ def main():
     root_json["main_summary"].update(main_summary_root_json)
 
     # data.jsonを生成する
-    with open("data_new.json", "w") as export_json:
+    with open("data.json", "w") as export_json:
         json.dump(root_json, export_json, indent="\t", ensure_ascii=False)
 
 
