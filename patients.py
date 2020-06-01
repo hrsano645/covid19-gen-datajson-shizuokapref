@@ -22,6 +22,11 @@ ROOT_JSON_TEMPLATE = """
         "date": "",
         "data": []
     },
+    "inspections_summary": {
+        "date": "",
+        "labels": [],
+        "datasets": []
+    },
     "inspection_persons": {
         "date": "",
         "labels": [],
@@ -100,12 +105,20 @@ PATIENTS_SUMMARY_DATA_JSON_TEMPLATE = """
 }
 """
 
+INSPECTIONS_SUMMARY_DATASET_JSON_TEMPLATE = """
+{
+    "label": "検査実施件数",
+    "data": []
+}
+"""
+
 INSPECTION_PERSONS_DATASET_JSON_TEMPLATE = """
 {
     "label": "検査実施人数",
     "data": []
 }
 """
+
 
 # 置き換え用のルールを用意
 ReplaceRule = namedtuple("ReplaceRule", ["pattern", "newstr"])
@@ -181,10 +194,6 @@ def varidate_opendata_dateformat(opendata_date_str):
         return (result_ymd[0], result_ymd[1], result_ymd[2])
 
 
-def generate_root_json():
-    pass
-
-
 def main():
 
     # 時間関係の生成
@@ -207,6 +216,7 @@ def main():
     call_center_filename = "./" + args[3]
     patients_filename = "./" + args[1]
     test_people_filename = "./" + args[2]
+    inspections_summary_filename = "./" + args[4]
 
     # main_summary用の変数
     date_n = []  # 陽性者数をカウントする際に利用する
@@ -226,6 +236,7 @@ def main():
     root_json["patients"]["date"] = now_date
     root_json["patients_summary"]["date"] = now_date
     root_json["inspection_persons"]["date"] = now_date
+    root_json["inspections_summary"]["date"] = now_date
     root_json["lastUpdate"] = now_date
 
     #
@@ -376,6 +387,43 @@ def main():
 
     # ルートのpatients_summary > dataに結合する
     root_json["patients_summary"]["data"].extend(patients_summary_data_list)
+
+    #
+    # inspections_summary: 検査実施件数
+    #
+
+    # labelsを生成
+    root_json["inspections_summary"]["labels"].extend(
+        [d.strftime("%Y-%m-%d") + "T08:00:00.000Z" for d in date_list]
+    )
+
+    # datasets:検査実施人数 の生成
+    inspections_summary_data_list = list()
+    with open(
+        inspections_summary_filename, "r", encoding="shift-jis"
+    ) as inspections_summary_file:
+        inspections_summary_csv = csv.DictReader(inspections_summary_file)
+
+        for inspections_summary_row in inspections_summary_csv:
+
+            inspections_summary_count = int(inspections_summary_row["検査実施_件数"])
+            inspections_summary_data_list.append(inspections_summary_count)
+
+            # main_summaryの数値も生成
+            kensa = kensa + inspections_summary_count
+
+    # 検査実施人数のjsonテンプレートを取得
+    inspections_summary_dataset_json = json.loads(
+        INSPECTIONS_SUMMARY_DATASET_JSON_TEMPLATE
+    )
+
+    # datasetのdataを更新
+    inspections_summary_dataset_json["data"].extend(inspections_summary_data_list)
+
+    # ルートのinspections_summary > datasetsに追加
+    root_json["inspections_summary"]["datasets"].append(
+        inspections_summary_dataset_json
+    )
 
     #
     # inspection_persons: 検査実施人数
