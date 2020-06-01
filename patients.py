@@ -180,6 +180,11 @@ def varidate_opendata_dateformat(opendata_date_str):
         result_ymd = validate_result.groups()
         return (result_ymd[0], result_ymd[1], result_ymd[2])
 
+
+def generate_root_json():
+    pass
+
+
 def main():
 
     # 時間関係の生成
@@ -199,10 +204,11 @@ def main():
 
     # 引数からファイル名を取得
     args = sys.argv
+    call_center_filename = "./" + args[3]
+    patients_filename = "./" + args[1]
+    test_people_filename = "./" + args[2]
 
-    filename = "./" + args[1]
-
-    # 変数
+    # main_summary用の変数
     date_n = []  # 陽性者数をカウントする際に利用する
     kensa = 0  # 検査実施人数
     kanzya = 0  # 陽性患者数
@@ -212,28 +218,23 @@ def main():
     taiin = 0  # 退院
     shibo = 0  # 死亡
 
-    # data.jsonのルートデータ構造を取得
-
+    # data.jsonルートのデータ構造を取得
     root_json = json.loads(ROOT_JSON_TEMPLATE)
 
-    # 更新日を設定
-
+    # 各データの更新日を設定
     root_json["querents"]["date"] = now_date
     root_json["patients"]["date"] = now_date
     root_json["patients_summary"]["date"] = now_date
     root_json["inspection_persons"]["date"] = now_date
     root_json["lastUpdate"] = now_date
 
+    #
     # querents: 検査件数
-
-    filename = "./" + args[3]
-
-    # querents_data_jsonをロードして、毎回生成し続ける
+    #
 
     querent_data_list = list()
-
-    with open(filename, "r", encoding="shift-jis") as f3:
-        call_center_csv = csv.DictReader(f3)
+    with open(call_center_filename, "r", encoding="shift-jis") as call_center_file:
+        call_center_csv = csv.DictReader(call_center_file)
 
         for call_center_row in call_center_csv:
 
@@ -284,12 +285,9 @@ def main():
     # patients: 陽性者
     #
 
-    filename = "./" + args[1]
-
     patients_data_list = list()
-
-    with open(filename, "r", encoding="shift-jis") as f1:
-        patients_csv = csv.DictReader(f1)
+    with open(patients_filename, "r", encoding="shift-jis") as patients_file:
+        patients_csv = csv.DictReader(patients_file)
 
         for patients_row in patients_csv:
 
@@ -380,9 +378,8 @@ def main():
     root_json["patients_summary"]["data"].extend(patients_summary_data_list)
 
     #
-    # inspection_persons
+    # inspection_persons: 検査実施人数
     #
-    filename = "./" + args[2]
 
     # labelsを生成
     root_json["inspection_persons"]["labels"].extend(
@@ -390,10 +387,9 @@ def main():
     )
 
     # datasets:検査実施人数 の生成
-
     inspection_persons_data_list = list()
-    with open(filename, "r", encoding="shift-jis") as f2:
-        inspection_persons_csv = csv.DictReader(f2)
+    with open(test_people_filename, "r", encoding="shift-jis") as test_people_file:
+        inspection_persons_csv = csv.DictReader(test_people_file)
 
         for inspection_persons_row in inspection_persons_csv:
 
@@ -408,16 +404,19 @@ def main():
         INSPECTION_PERSONS_DATASET_JSON_TEMPLATE
     )
 
+    # datasetのdataを更新
     inspection_persons_dataset_json["data"].extend(inspection_persons_data_list)
 
+    # ルートのinspection_persons > datasetsに追加
     root_json["inspection_persons"]["datasets"].append(inspection_persons_dataset_json)
 
-    # main_summaryを生成
-    # データがネスト構造なので、root>d1~d3まで名前をつけて構造を間違えないようにする
+    #
+    # main_summary
+    #
 
     main_summary_root_json = json.loads(MAIN_SUMMARY_JSON_TEMPLATE)
 
-    # ネスト構造に名前をつける
+    # データがネスト構造なので、root>d1~d3まで名前をつけて構造を間違えないようにする
     # 検査実施数のネスト
     main_summary_d1 = main_summary_root_json["children"]
     # 用患者数のネスト
@@ -440,8 +439,8 @@ def main():
     # 死亡
     main_summary_d2[2]["value"] = shibo
 
+    # ルートのmain_summaryに結合する
     root_json["main_summary"].update(main_summary_root_json)
-
 
     # data.jsonを生成する
     with open("data_new.json", "w") as export_json:
