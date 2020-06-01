@@ -62,7 +62,7 @@ def replace_nendai_format(src: str):
 
 # jsonのテンプレート
 
-root_json_template = """
+ROOT_JSON_TEMPLATE = """
 {
     "querents": {
         "date": "",
@@ -86,7 +86,7 @@ root_json_template = """
 }
 """
 
-main_summary_json_template = """
+MAIN_SUMMARY_JSON_TEMPLATE = """
 {
     "attr": "検査実施人数",
     "value": 0,
@@ -123,7 +123,7 @@ main_summary_json_template = """
 }
 """
 
-querents_data_json_template = """
+QUERENTS_DATA_JSON_TEMPLATE = """
 {
     "日付": "",
     "曜日": 0,
@@ -136,7 +136,7 @@ querents_data_json_template = """
 }
 """
 
-patients_data_json_template = """
+PATIENTS_DATA_JSON_TEMPLATE = """
 {
     "リリース日": "",
     "居住地": "",
@@ -147,14 +147,14 @@ patients_data_json_template = """
 }
 """
 
-patients_summary_data_json_template = """
+PATIENTS_SUMMARY_DATA_JSON_TEMPLATE = """
 {
     "日付": "",
     "小計": 0
 }
 """
 
-inspection_persons_dataset_json_template = """
+INSPECTION_PERSONS_DATASET_JSON_TEMPLATE = """
 {
     "label": "検査実施人数",
     "data": []
@@ -196,7 +196,7 @@ def main():
 
     # data.jsonのルートデータ構造を取得
 
-    root_json = json.loads(root_json_template)
+    root_json = json.loads(ROOT_JSON_TEMPLATE)
 
     # 更新日を設定
 
@@ -245,7 +245,7 @@ def main():
             querent_row_soudankensu = int(call_center_row["相談件数"].replace(",", ""))
 
             # querents > dataのデータを生成
-            querents_data_json = json.loads(querents_data_json_template)
+            querents_data_json = json.loads(QUERENTS_DATA_JSON_TEMPLATE)
 
             querents_data_json["日付"] = querent_hiduke_jsonstr
             querents_data_json["曜日"] = 0
@@ -298,7 +298,7 @@ def main():
             # data_nに個数追加
             date_n.append(patients_date_jsonstr)
 
-            patients_data_json = json.loads(patients_data_json_template)
+            patients_data_json = json.loads(PATIENTS_DATA_JSON_TEMPLATE)
 
             patients_data_json["リリース日"] = patients_release_date_jsonstr
             patients_data_json["居住地"] = patients_row["患者_居住地"]
@@ -352,7 +352,7 @@ def main():
         patients_hiduke_jsonstr = patients_day + "T08:00:00.000Z"
 
         # dataの構造を読み込んで生成する
-        patients_summary_data_json = json.loads(patients_summary_data_json_template)
+        patients_summary_data_json = json.loads(PATIENTS_SUMMARY_DATA_JSON_TEMPLATE)
 
         patients_summary_data_json["日付"] = patients_hiduke_jsonstr
         patients_summary_data_json["小計"] = patients_count
@@ -388,7 +388,7 @@ def main():
 
     # 検査実施人数のjsonテンプレートを取得
     inspection_persons_dataset_json = json.loads(
-        inspection_persons_dataset_json_template
+        INSPECTION_PERSONS_DATASET_JSON_TEMPLATE
     )
 
     inspection_persons_dataset_json["data"].extend(inspection_persons_data_list)
@@ -398,7 +398,7 @@ def main():
     # main_summaryを生成
     # データがネスト構造なので、root>d1~d3まで名前をつけて構造を間違えないようにする
 
-    main_summary_root_json = json.loads(main_summary_json_template)
+    main_summary_root_json = json.loads(MAIN_SUMMARY_JSON_TEMPLATE)
 
     # ネスト構造に名前をつける
     # 検査実施数のネスト
@@ -425,6 +425,8 @@ def main():
 
     root_json["main_summary"].update(main_summary_root_json)
 
+
+    # data.jsonを生成する
     with open("data_new.json", "w") as export_json:
         json.dump(root_json, export_json, indent="\t", ensure_ascii=False)
 
