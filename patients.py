@@ -199,17 +199,17 @@ def main():
     # 時間関係の生成
 
     dt_now = datetime.now()
-    start = datetime.strptime("2020-01-22", "%Y-%m-%d").date()
+    start_datetime = datetime.strptime("2020-01-22", "%Y-%m-%d").date()
 
-    last_datetime = dt_now.replace(hour=19, minute=30, second=0, microsecond=0)
-
-    # data_jsonの更新日
-    now_date = last_datetime.strftime("%Y/%m/%d %H:%M")
+    # data_jsonの更新日を生成
+    latest_datetime_str = dt_now.replace(
+        hour=19, minute=30, second=0, microsecond=0
+    ).strftime("%Y/%m/%d %H:%M")
 
     tomorrow = dt_now + timedelta(days=1)
 
     # 何らかの終了日？ # TODO:2020-05-30 調査必要
-    end = tomorrow.date()
+    end_datetime = tomorrow.date()
 
     # 引数からファイル名を取得
     args = sys.argv
@@ -232,12 +232,12 @@ def main():
     root_json = json.loads(ROOT_JSON_TEMPLATE)
 
     # 各データの更新日を設定
-    root_json["querents"]["date"] = now_date
-    root_json["patients"]["date"] = now_date
-    root_json["patients_summary"]["date"] = now_date
-    root_json["inspection_persons"]["date"] = now_date
-    root_json["inspections_summary"]["date"] = now_date
-    root_json["lastUpdate"] = now_date
+    root_json["querents"]["date"] = latest_datetime_str
+    root_json["patients"]["date"] = latest_datetime_str
+    root_json["patients_summary"]["date"] = latest_datetime_str
+    root_json["inspection_persons"]["date"] = latest_datetime_str
+    root_json["inspections_summary"]["date"] = latest_datetime_str
+    root_json["lastUpdate"] = latest_datetime_str
 
     #
     # querents: 検査件数
