@@ -185,12 +185,12 @@ def varidate_opendata_dateformat(opendata_date_str):
 
     dateformat_pattern = re.compile(r"(\d{4})\/(\d{1,2})\/(\d{1,2})")
 
-    validate_result = dateformat_pattern.match(opendata_date_str)
+    varidate_result = dateformat_pattern.match(opendata_date_str)
 
-    if not validate_result:
+    if not varidate_result:
         return None
     else:
-        result_ymd = validate_result.groups()
+        result_ymd = varidate_result.groups()
         return (result_ymd[0], result_ymd[1], result_ymd[2])
 
 
