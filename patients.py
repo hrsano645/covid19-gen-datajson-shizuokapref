@@ -174,7 +174,7 @@ def replace_nendai_format(src: str):
         return src.replace(target_rule.pattern, target_rule.newstr)
 
 
-def varidate_opendata_dateformat(opendata_date_str):
+def validate_opendata_dateformat(opendata_date_str):
     """
     オープンデータの日付が正しいフォーマットか検証する
     正しいフォーマットならtupleで（year, month, day)を出力する。
@@ -185,12 +185,12 @@ def varidate_opendata_dateformat(opendata_date_str):
 
     dateformat_pattern = re.compile(r"(\d{4})\/(\d{1,2})\/(\d{1,2})")
 
-    varidate_result = dateformat_pattern.match(opendata_date_str)
+    validate_result = dateformat_pattern.match(opendata_date_str)
 
-    if not varidate_result:
+    if not validate_result:
         return None
     else:
-        result_ymd = varidate_result.groups()
+        result_ymd = validate_result.groups()
         return (result_ymd[0], result_ymd[1], result_ymd[2])
 
 
@@ -261,17 +261,17 @@ def main():
 
             # 日付の正規化
 
-            varidate_result_date = varidate_opendata_dateformat(
+            validate_result_date = validate_opendata_dateformat(
                 call_center_row["受付_年月日"]
             )
 
-            if not varidate_result_date:
+            if not validate_result_date:
                 break
 
             querent_date = datetime(
-                year=int(varidate_result_date[0]),
-                month=int(varidate_result_date[1]),
-                day=int(varidate_result_date[2]),
+                year=int(validate_result_date[0]),
+                month=int(validate_result_date[1]),
+                day=int(validate_result_date[2]),
             )
 
             # jsonの"日付"を生成
@@ -313,15 +313,15 @@ def main():
         for patients_row in patients_csv:
 
             # 日付の正規化
-            varidate_result_date = varidate_opendata_dateformat(patients_row["公表_年月日"])
+            validate_result_date = validate_opendata_dateformat(patients_row["公表_年月日"])
 
-            if not varidate_result_date:
+            if not validate_result_date:
                 break
 
             patients_date = datetime(
-                year=int(varidate_result_date[0]),
-                month=int(varidate_result_date[1]),
-                day=int(varidate_result_date[2]),
+                year=int(validate_result_date[0]),
+                month=int(validate_result_date[1]),
+                day=int(validate_result_date[2]),
             )
 
             # jsonの"リリース日"を生成
