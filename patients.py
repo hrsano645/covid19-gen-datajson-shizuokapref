@@ -22,6 +22,11 @@ ROOT_JSON_TEMPLATE = """
         "date": "",
         "data": []
     },
+    "inspections_summary": {
+        "date": "",
+        "labels": [],
+        "datasets": []
+    },
     "inspection_persons": {
         "date": "",
         "labels": [],
@@ -100,12 +105,20 @@ PATIENTS_SUMMARY_DATA_JSON_TEMPLATE = """
 }
 """
 
+INSPECTIONS_SUMMARY_DATASET_JSON_TEMPLATE = """
+{
+    "label": "検査実施件数",
+    "data": []
+}
+"""
+
 INSPECTION_PERSONS_DATASET_JSON_TEMPLATE = """
 {
     "label": "検査実施人数",
     "data": []
 }
 """
+
 
 # 置き換え用のルールを用意
 ReplaceRule = namedtuple("ReplaceRule", ["pattern", "newstr"])
@@ -161,7 +174,7 @@ def replace_nendai_format(src: str):
         return src.replace(target_rule.pattern, target_rule.newstr)
 
 
-def varidate_opendata_dateformat(opendata_date_str):
+def validate_opendata_dateformat(opendata_date_str):
     """
     オープンデータの日付が正しいフォーマットか検証する
     正しいフォーマットならtupleで（year, month, day)を出力する。
@@ -181,8 +194,14 @@ def varidate_opendata_dateformat(opendata_date_str):
         return (result_ymd[0], result_ymd[1], result_ymd[2])
 
 
-def generate_root_json():
-    pass
+def gen_datelist(start_datetime, end_datetime):
+    """
+    日付のリストを生成する。start, endともにdatetimeオブジェクト
+    """
+    return [
+        start_datetime + timedelta(days=n)
+        for n in range((end_datetime - start_datetime).days)
+    ]
 
 
 def main():
@@ -190,23 +209,24 @@ def main():
     # 時間関係の生成
 
     dt_now = datetime.now()
-    start = datetime.strptime("2020-01-22", "%Y-%m-%d").date()
+    start_datetime = datetime.strptime("2020-01-22", "%Y-%m-%d").date()
 
-    last_datetime = dt_now.replace(hour=19, minute=30, second=0, microsecond=0)
-
-    # data_jsonの更新日
-    now_date = last_datetime.strftime("%Y/%m/%d %H:%M")
+    # data_jsonの更新日を生成
+    latest_datetime_str = dt_now.replace(
+        hour=19, minute=30, second=0, microsecond=0
+    ).strftime("%Y/%m/%d %H:%M")
 
     tomorrow = dt_now + timedelta(days=1)
 
     # 何らかの終了日？ # TODO:2020-05-30 調査必要
-    end = tomorrow.date()
+    end_datetime = tomorrow.date()
 
     # 引数からファイル名を取得
     args = sys.argv
     call_center_filename = "./" + args[3]
     patients_filename = "./" + args[1]
     test_people_filename = "./" + args[2]
+    inspections_summary_filename = "./" + args[4]
 
     # main_summary用の変数
     date_n = []  # 陽性者数をカウントする際に利用する
@@ -222,11 +242,12 @@ def main():
     root_json = json.loads(ROOT_JSON_TEMPLATE)
 
     # 各データの更新日を設定
-    root_json["querents"]["date"] = now_date
-    root_json["patients"]["date"] = now_date
-    root_json["patients_summary"]["date"] = now_date
-    root_json["inspection_persons"]["date"] = now_date
-    root_json["lastUpdate"] = now_date
+    root_json["querents"]["date"] = latest_datetime_str
+    root_json["patients"]["date"] = latest_datetime_str
+    root_json["patients_summary"]["date"] = latest_datetime_str
+    root_json["inspection_persons"]["date"] = latest_datetime_str
+    root_json["inspections_summary"]["date"] = latest_datetime_str
+    root_json["lastUpdate"] = latest_datetime_str
 
     #
     # querents: 検査件数
@@ -240,17 +261,17 @@ def main():
 
             # 日付の正規化
 
-            varidate_result_date = varidate_opendata_dateformat(
+            validate_result_date = validate_opendata_dateformat(
                 call_center_row["受付_年月日"]
             )
 
-            if not varidate_result_date:
+            if not validate_result_date:
                 break
 
             querent_date = datetime(
-                year=int(varidate_result_date[0]),
-                month=int(varidate_result_date[1]),
-                day=int(varidate_result_date[2]),
+                year=int(validate_result_date[0]),
+                month=int(validate_result_date[1]),
+                day=int(validate_result_date[2]),
             )
 
             # jsonの"日付"を生成
@@ -292,15 +313,15 @@ def main():
         for patients_row in patients_csv:
 
             # 日付の正規化
-            varidate_result_date = varidate_opendata_dateformat(patients_row["公表_年月日"])
+            validate_result_date = validate_opendata_dateformat(patients_row["公表_年月日"])
 
-            if not varidate_result_date:
+            if not validate_result_date:
                 break
 
             patients_date = datetime(
-                year=int(varidate_result_date[0]),
-                month=int(varidate_result_date[1]),
-                day=int(varidate_result_date[2]),
+                year=int(validate_result_date[0]),
+                month=int(validate_result_date[1]),
+                day=int(validate_result_date[2]),
             )
 
             # jsonの"リリース日"を生成
@@ -348,14 +369,10 @@ def main():
     # patients_summary: 陽性者サマリー（人数
     #
 
-    # startからendまでの毎日の日付と、陽性者数の数を生成する
-
-    # datetimesのstartからendまでのリストを生成
-    # TODO:2020-05-31 これは後でも使うので、最初に生成したほうがいいと思う
-    date_list = [start + timedelta(days=n) for n in range((end - start).days)]
-
-    # 毎日の日付を生成, 数は0で初期化
-    patients_day_of_count_list = {d.strftime("%Y-%m-%d"): 0 for d in date_list}
+    # startからendまでの毎日の日付と、陽性者数の数を生成する数は0で初期化
+    patients_day_of_count_list = {
+        d.strftime("%Y-%m-%d"): 0 for d in gen_datelist(start_datetime, end_datetime)
+    }
 
     # data_n の個数でカウントして、count_listの個数をアップデートさせる
     patients_day_of_count_list.update(Counter(date_n))
@@ -378,12 +395,67 @@ def main():
     root_json["patients_summary"]["data"].extend(patients_summary_data_list)
 
     #
+    # inspections_summary: 検査実施件数
+    #
+
+    # datasets:検査実施件数 の生成
+    inspections_summary_data_list = list()
+    with open(
+        inspections_summary_filename, "r", encoding="shift-jis"
+    ) as inspections_summary_file:
+        inspections_summary_csv = list(csv.DictReader(inspections_summary_file))
+
+        for index, inspections_summary_row in enumerate(inspections_summary_csv):
+
+            # labelと数値を揃えるために一時的に
+            row_datetime = datetime.strptime(
+                inspections_summary_row["実施_年月日"], "%Y/%m/%d"
+            )
+            if index == 0:
+                ins_smry_startdatetime = row_datetime
+            if index == len(inspections_summary_csv) - 1:
+                ins_smry_end_datetime = row_datetime
+
+            inspections_summary_count = int(inspections_summary_row["検査実施_件数"])
+            inspections_summary_data_list.append(inspections_summary_count)
+
+            # main_summaryの数値も生成
+            kensa = kensa + inspections_summary_count
+
+    # labelsを生成
+    # 検査実施件数の日付の範囲に合わせて生成する
+    root_json["inspections_summary"]["labels"].extend(
+        [
+            d.strftime("%Y-%m-%d") + "T08:00:00.000Z"
+            for d in gen_datelist(
+                ins_smry_startdatetime, ins_smry_end_datetime + timedelta(days=1)
+            )
+        ]
+    )
+
+    # 検査実施件数のjsonテンプレートを取得
+    inspections_summary_dataset_json = json.loads(
+        INSPECTIONS_SUMMARY_DATASET_JSON_TEMPLATE
+    )
+
+    # datasetのdataを更新
+    inspections_summary_dataset_json["data"].extend(inspections_summary_data_list)
+
+    # ルートのinspections_summary > datasetsに追加
+    root_json["inspections_summary"]["datasets"].append(
+        inspections_summary_dataset_json
+    )
+
+    #
     # inspection_persons: 検査実施人数
     #
 
     # labelsを生成
     root_json["inspection_persons"]["labels"].extend(
-        [d.strftime("%Y-%m-%d") + "T08:00:00.000Z" for d in date_list]
+        [
+            d.strftime("%Y-%m-%d") + "T08:00:00.000Z"
+            for d in gen_datelist(start_datetime, end_datetime)
+        ]
     )
 
     # datasets:検査実施人数 の生成
