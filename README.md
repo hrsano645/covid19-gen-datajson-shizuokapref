@@ -28,3 +28,6 @@ pipenvを利用してください。pipenv上ではpython3.7を利用してい�
 ```bash
 $ pipenv install
 ```
+
+# data.jsonのデータフォーマットについて
+こちらを参照してください -> [data_format.md](data_format.md)
