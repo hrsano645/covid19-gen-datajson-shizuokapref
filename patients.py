@@ -435,12 +435,12 @@ def main():
 
             # 件数:検査実施_件数 （医療機関等）の追加
             inspections_summary_dataset["医療機関等"].append(
-                int(inspections_summary_row["検査実施_件数\n（地方衛生研究所）"].replace(",", ""))
+                int(inspections_summary_row["検査実施_件数\n（医療機関等）"].replace(",", ""))
             )
 
             # 件数:検査実施_件数 （地方衛生研究所）の追加
             inspections_summary_dataset["地方衛生研究所"].append(
-                int(inspections_summary_row["検査実施_件数\n（医療機関等）"].replace(",", ""))
+                int(inspections_summary_row["検査実施_件数\n（地方衛生研究所）"].replace(",", ""))
             )
 
     # データの更新
