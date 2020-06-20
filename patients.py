@@ -24,8 +24,12 @@ ROOT_JSON_TEMPLATE = """
     },
     "inspections_summary": {
         "date": "",
-        "labels": [],
-        "datasets": []
+        "initial_cumulative": {
+            "note": "2020/04/26まで",
+            "count": 0
+        },
+        "data": {},
+        "labels": []
     },
     "inspection_persons": {
         "date": "",
@@ -102,13 +106,6 @@ PATIENTS_SUMMARY_DATA_JSON_TEMPLATE = """
 {
     "日付": "",
     "小計": 0
-}
-"""
-
-INSPECTIONS_SUMMARY_DATASET_JSON_TEMPLATE = """
-{
-    "label": "検査実施件数",
-    "data": []
 }
 """
 
@@ -398,56 +395,61 @@ def main():
     # inspections_summary: 検査実施件数
     #
 
-    # datasets:検査実施件数 の生成
-    inspections_summary_data_list = list()
     with open(
         inspections_summary_filename, "r", encoding="shift-jis"
     ) as inspections_summary_file:
         inspections_summary_csv = list(csv.DictReader(inspections_summary_file))
 
-        for index, inspections_summary_row in enumerate(inspections_summary_csv):
+        # 1行目は4/26までの累計を記入
 
-            # labelと数値を揃えるために一時的に
-            row_datetime = datetime.strptime(
-                inspections_summary_row["実施_年月日"], "%Y/%m/%d"
+        root_json["inspections_summary"]["initial_cumulative"]["count"] = int(
+            inspections_summary_csv[0]["検査実施_件数\n（地方衛生研究所）"].replace(",", "")
+        ) + int(inspections_summary_csv[0]["検査実施_件数\n（医療機関等）"].replace(",", ""))
+
+        # 2行目以降は日時データとして処理
+
+        # 検査実施件数グラフ の生成:
+        # info:2020-06-18: Python3は日本語も引数名で利用できます。python2はできないので注意
+        inspections_summary_dataset = dict(医療機関等=list(), 地方衛生研究所=list())
+        inspections_summary_labels = list()
+
+        for index, inspections_summary_row in enumerate(inspections_summary_csv[1:]):
+
+            # labelsの生成
+            # 日付の正規化
+            validate_result_date = validate_opendata_dateformat(
+                inspections_summary_row["実施_年月日"]
             )
-            if index == 0:
-                ins_smry_startdatetime = row_datetime
-            if index == len(inspections_summary_csv) - 1:
-                ins_smry_end_datetime = row_datetime
 
-            inspections_summary_count = int(inspections_summary_row["検査実施_件数"])
-            inspections_summary_data_list.append(inspections_summary_count)
+            if not validate_result_date:
+                break
 
-            # main_summaryの数値も生成
-            kensa = kensa + inspections_summary_count
-
-    # labelsを生成
-    # 検査実施件数の日付の範囲に合わせて生成する
-    root_json["inspections_summary"]["labels"].extend(
-        [
-            d.strftime("%Y-%m-%d") + "T08:00:00.000Z"
-            for d in gen_datelist(
-                ins_smry_startdatetime, ins_smry_end_datetime + timedelta(days=1)
+            inspections_summary_date = datetime(
+                year=int(validate_result_date[0]),
+                month=int(validate_result_date[1]),
+                day=int(validate_result_date[2]),
             )
-        ]
-    )
+            inspections_summary_labels.append(
+                inspections_summary_date.strftime("%m/%d")
+            )
 
-    # 検査実施件数のjsonテンプレートを取得
-    inspections_summary_dataset_json = json.loads(
-        INSPECTIONS_SUMMARY_DATASET_JSON_TEMPLATE
-    )
+            # 件数:検査実施_件数 （医療機関等）の追加
+            inspections_summary_dataset["医療機関等"].append(
+                int(inspections_summary_row["検査実施_件数\n（地方衛生研究所）"].replace(",", ""))
+            )
 
-    # datasetのdataを更新
-    inspections_summary_dataset_json["data"].extend(inspections_summary_data_list)
+            # 件数:検査実施_件数 （地方衛生研究所）の追加
+            inspections_summary_dataset["地方衛生研究所"].append(
+                int(inspections_summary_row["検査実施_件数\n（医療機関等）"].replace(",", ""))
+            )
 
-    # ルートのinspections_summary > datasetsに追加
-    root_json["inspections_summary"]["datasets"].append(
-        inspections_summary_dataset_json
-    )
+    # データの更新
+    root_json["inspections_summary"]["data"].update(inspections_summary_dataset)
+    root_json["inspections_summary"]["labels"].extend(inspections_summary_labels)
 
     #
     # inspection_persons: 検査実施人数
+    # TODO:2020-06-18: TODO記載現在で、対策サイトに載せていないので必要ない状態だけど、データがある限り生成し続けることにしています。
     #
 
     # labelsを生成
