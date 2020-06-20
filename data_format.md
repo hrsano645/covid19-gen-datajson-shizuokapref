@@ -235,7 +235,7 @@ No | 全国地方公共団体コード | 都道府県名 | 市区町村名 | 公
 }
 ```
 
-### inspection_persons: 検査実施件数（グラフを重ね合わせ
+### inspections_summary: 検査実施件数（グラフを重ね合わせ
 
 ```json
 {
