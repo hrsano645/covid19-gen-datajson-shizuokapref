@@ -31,11 +31,6 @@ ROOT_JSON_TEMPLATE = """
         "data": {},
         "labels": []
     },
-    "inspection_persons": {
-        "date": "",
-        "labels": [],
-        "datasets": []
-    },
     "lastUpdate": "",
     "main_summary": {}
 }
@@ -63,6 +58,14 @@ MAIN_SUMMARY_JSON_TEMPLATE = """
                             "value": 0
                         }
                     ]
+                },
+                {
+                    "attr": "宿泊療養",
+                    "value": 0
+                },
+                {
+                    "attr": "入院・療養等調整中",
+                    "value": 0
                 },
                 {
                     "attr": "退院",
@@ -106,13 +109,6 @@ PATIENTS_SUMMARY_DATA_JSON_TEMPLATE = """
 {
     "日付": "",
     "小計": 0
-}
-"""
-
-INSPECTION_PERSONS_DATASET_JSON_TEMPLATE = """
-{
-    "label": "検査実施人数",
-    "data": []
 }
 """
 
@@ -220,20 +216,22 @@ def main():
 
     # 引数からファイル名を取得
     args = sys.argv
-    call_center_filename = "./" + args[3]
+    call_center_filename = "./" + args[2]
     patients_filename = "./" + args[1]
-    test_people_filename = "./" + args[2]
-    inspections_summary_filename = "./" + args[4]
+    # test_people_filename = "./" + args[2]
+    inspections_summary_filename = "./" + args[3]
 
     # main_summary用の変数
     date_n = []  # 陽性者数をカウントする際に利用する
-    kensa = 0  # 検査実施人数
-    kanzya = 0  # 陽性患者数
-    nyuin = 0  # 入院中
-    keisyo = 0  # 軽症・中症
-    zyusyo = 0  # 重症
-    taiin = 0  # 退院
-    shibo = 0  # 死亡
+    summary_count_kensa = 0  # 検査実施人数
+    summary_count_kanzya = 0  # 陽性患者数
+    summary_count_nyuin = 0  # 入院中
+    summary_count_keisyo = 0  # 軽症・中症
+    summary_count_zyusyo = 0  # 重症
+    summary_count_syukuhaku = 0  # 宿泊療養
+    summary_count_tyosei = 0  # 入院・療養等調整中
+    summary_count_taiin = 0  # 退院
+    summary_count_shibo = 0  # 死亡
 
     # data.jsonルートのデータ構造を取得
     root_json = json.loads(ROOT_JSON_TEMPLATE)
@@ -242,7 +240,6 @@ def main():
     root_json["querents"]["date"] = latest_datetime_str
     root_json["patients"]["date"] = latest_datetime_str
     root_json["patients_summary"]["date"] = latest_datetime_str
-    root_json["inspection_persons"]["date"] = latest_datetime_str
     root_json["inspections_summary"]["date"] = latest_datetime_str
     root_json["lastUpdate"] = latest_datetime_str
 
@@ -255,7 +252,6 @@ def main():
         call_center_csv = csv.DictReader(call_center_file)
 
         for call_center_row in call_center_csv:
-
             # 日付の正規化
 
             validate_result_date = validate_opendata_dateformat(
@@ -339,24 +335,33 @@ def main():
             patients_data_json["性別"] = patients_row["患者_性別"]
 
             # main_summary の必要な情報も取得している
+
             if patients_row["患者_退院済フラグ"] == "1":
                 patients_data_json["退院"] = "〇"
-                taiin += 1
-            else:
+                summary_count_taiin += 1
+            elif patients_row["患者_退院済フラグ"] == "2":
+                summary_count_syukuhaku += 1
+            elif patients_row["患者_退院済フラグ"] == "3":
+                summary_count_tyosei += 1
+            elif patients_row["患者_退院済フラグ"] == "0":
                 patients_data_json["退院"] = ""
-                nyuin += 1
+                summary_count_nyuin += 1
+            else:
+                # 空白、それ以外の値の場合の場合
+                # TODO:2020/08/02 判断しづらい。
+                pass
 
                 if patients_row["患者_状態"] == "軽症・中等症":
-                    keisyo += 1
+                    summary_count_keisyo += 1
                 if patients_row["患者_状態"] == "重症":
-                    zyusyo += 1
+                    summary_count_zyusyo += 1
                 if patients_row["患者_状態"] == "死亡":
-                    shibo += 1
-                    nyuin -= 1
+                    summary_count_shibo += 1
+                    summary_count_nyuin -= 1
 
             patients_data_json["date"] = patients_date_jsonstr
 
-            kanzya += 1
+            summary_count_kanzya += 1
             patients_data_list.append(patients_data_json)
 
     # ルートのpatients > dataに結合する
@@ -448,43 +453,6 @@ def main():
     root_json["inspections_summary"]["labels"].extend(inspections_summary_labels)
 
     #
-    # inspection_persons: 検査実施人数
-    # TODO:2020-06-18: TODO記載現在で、対策サイトに載せていないので必要ない状態だけど、データがある限り生成し続けることにしています。
-    #
-
-    # labelsを生成
-    root_json["inspection_persons"]["labels"].extend(
-        [
-            d.strftime("%Y-%m-%d") + "T08:00:00.000Z"
-            for d in gen_datelist(start_datetime, end_datetime)
-        ]
-    )
-
-    # datasets:検査実施人数 の生成
-    inspection_persons_data_list = list()
-    with open(test_people_filename, "r", encoding="shift-jis") as test_people_file:
-        inspection_persons_csv = csv.DictReader(test_people_file)
-
-        for inspection_persons_row in inspection_persons_csv:
-
-            inspection_persons_count = int(inspection_persons_row["検査実施_人数"])
-            inspection_persons_data_list.append(inspection_persons_count)
-
-            # main_summaryの数値も生成
-            kensa = kensa + inspection_persons_count
-
-    # 検査実施人数のjsonテンプレートを取得
-    inspection_persons_dataset_json = json.loads(
-        INSPECTION_PERSONS_DATASET_JSON_TEMPLATE
-    )
-
-    # datasetのdataを更新
-    inspection_persons_dataset_json["data"].extend(inspection_persons_data_list)
-
-    # ルートのinspection_persons > datasetsに追加
-    root_json["inspection_persons"]["datasets"].append(inspection_persons_dataset_json)
-
-    #
     # main_summary
     #
 
@@ -499,19 +467,23 @@ def main():
     main_summary_d3 = main_summary_d2[0]["children"]
 
     # 検査実施人数
-    main_summary_root_json["value"] = kensa
+    main_summary_root_json["value"] = summary_count_kensa
     # 陽性患者数
-    main_summary_d1[0]["value"] = kanzya
+    main_summary_d1[0]["value"] = summary_count_kanzya
     # 入院中
-    main_summary_d2[0]["value"] = nyuin
+    main_summary_d2[0]["value"] = summary_count_nyuin
     # 軽症・中等症
-    main_summary_d3[0]["value"] = keisyo
+    main_summary_d3[0]["value"] = summary_count_keisyo
     # 重症
-    main_summary_d3[1]["value"] = zyusyo
+    main_summary_d3[1]["value"] = summary_count_zyusyo
+    # 宿泊療養
+    main_summary_d2[1]["value"] = summary_count_syukuhaku
+    # 入院・療養等調整中 / 調査中
+    main_summary_d2[2]["value"] = summary_count_tyosei
     # 退院
-    main_summary_d2[1]["value"] = taiin
+    main_summary_d2[3]["value"] = summary_count_taiin
     # 死亡
-    main_summary_d2[2]["value"] = shibo
+    main_summary_d2[4]["value"] = summary_count_shibo
 
     # ルートのmain_summaryに結合する
     root_json["main_summary"].update(main_summary_root_json)
