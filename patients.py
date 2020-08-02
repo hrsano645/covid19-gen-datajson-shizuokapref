@@ -348,7 +348,7 @@ def main():
                 summary_count_nyuin += 1
             else:
                 # 空白、それ以外の値の場合の場合
-                # TODO:2020/08/02 判断しづらい。
+                # TODO:2020/08/02 何もしないようにしているが、実際は不明な項目
                 pass
 
                 if patients_row["患者_状態"] == "軽症・中等症":
