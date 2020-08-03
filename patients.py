@@ -323,6 +323,7 @@ def main():
             )
             # jsonの"date"
             patients_date_jsonstr = patients_date.strftime("%Y-%m-%d")
+            print(patients_date_jsonstr)
 
             # data_nに個数追加
             date_n.append(patients_date_jsonstr)
