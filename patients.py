@@ -218,7 +218,6 @@ def main():
     args = sys.argv
     call_center_filename = "./" + args[2]
     patients_filename = "./" + args[1]
-    # test_people_filename = "./" + args[2]
     inspections_summary_filename = "./" + args[3]
 
     # main_summary用の変数
