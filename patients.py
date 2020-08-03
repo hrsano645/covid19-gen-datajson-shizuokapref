@@ -343,13 +343,11 @@ def main():
                 summary_count_syukuhaku += 1
             elif patients_row["患者_退院済フラグ"] == "3":
                 summary_count_tyosei += 1
-            elif patients_row["患者_退院済フラグ"] == "0":
-                patients_data_json["退院"] = ""
-                summary_count_nyuin += 1
             else:
                 # 空白、それ以外の値の場合の場合
-                # TODO:2020/08/02 何もしないようにしているが、実際は不明な項目
-                pass
+                # patients_row["患者_退院済フラグ"] == "0"を含む
+                patients_data_json["退院"] = ""
+                summary_count_nyuin += 1
 
                 if patients_row["患者_状態"] == "軽症・中等症":
                     summary_count_keisyo += 1
