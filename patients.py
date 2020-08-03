@@ -335,6 +335,8 @@ def main():
             patients_data_json["性別"] = patients_row["患者_性別"]
 
             # main_summary の必要な情報も取得している
+            # TODO:2020-08-03 この部分は条件と処理をマッピングして探索できるようにしたほうがいい。（テストできるので）
+            # TODO:2020-08-03 またこのカウント処理はこの中でやらずに分離したほうが良いと思う。
 
             if patients_row["患者_退院済フラグ"] == "1":
                 patients_data_json["退院"] = "〇"
