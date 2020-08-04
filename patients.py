@@ -68,11 +68,11 @@ MAIN_SUMMARY_JSON_TEMPLATE = """
                     "value": 0
                 },
                 {
-                    "attr": "退院",
+                    "attr": "死亡",
                     "value": 0
                 },
                 {
-                    "attr": "死亡",
+                    "attr": "退院",
                     "value": 0
                 }
             ]
@@ -480,9 +480,9 @@ def main():
     # 入院・療養等調整中 / 調査中
     main_summary_d2[2]["value"] = summary_count_tyosei
     # 退院
-    main_summary_d2[3]["value"] = summary_count_taiin
+    main_summary_d2[3]["value"] = summary_count_shibo
     # 死亡
-    main_summary_d2[4]["value"] = summary_count_shibo
+    main_summary_d2[4]["value"] = summary_count_taiin
 
     # ルートのmain_summaryに結合する
     root_json["main_summary"].update(main_summary_root_json)
