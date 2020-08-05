@@ -433,8 +433,12 @@ def main():
                 month=int(validate_result_date[1]),
                 day=int(validate_result_date[2]),
             )
+            # pythonの日付書式フォーマットだとゼロ埋めとなるので、一度分解して左側のゼロを消して文字列に戻す（力技です）
             inspections_summary_labels.append(
-                inspections_summary_date.strftime("%m/%d")
+                "/".join(
+                    n_s.lstrip("0")
+                    for n_s in inspections_summary_date.strftime("%m/%d").split("/")
+                )
             )
 
             # 件数:検査実施_件数 （医療機関等）の追加
