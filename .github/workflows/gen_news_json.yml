@@ -1,0 +1,43 @@
+# manual action 
+
+name: "test"
+
+on:
+  workflow_dispatch:
+  
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  generate_news_json:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout
+      - uses: actions/checkout@v2
+        with:
+          ref: issue#10-add_news_json
+
+      # Runs a single command using the runners shell
+      - name: Set up Python 3.7
+        uses: action/setup-python@v2
+        with:
+          python-verison: 3.7
+    
+      # Runs a set of commands using the runners shell
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 black pytest
+
+
+    # Runs a single command using the runners shell
+      - name: Run gen_newsjson.py
+        run: python gen_newsjson.py
+        
+      - uses: actions/upload-artifact@v2
+        with:
+          name: news_json
+          path: news.json
