@@ -16,7 +16,7 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout
-      - uses: actions/checkout@v2
+        uses: actions/checkout@v2
         with:
           ref: issue#10-add_news_json
 
@@ -37,7 +37,8 @@ jobs:
       - name: Run gen_newsjson.py
         run: python gen_newsjson.py
         
-      - uses: actions/upload-artifact@v2
+      - name: file upload
+        uses: actions/upload-artifact@v2
         with:
           name: news_json
           path: news.json
