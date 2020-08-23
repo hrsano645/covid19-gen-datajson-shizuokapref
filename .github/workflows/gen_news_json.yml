@@ -22,7 +22,7 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Set up Python 3.7
-        uses: action/setup-python@v2
+        uses: actions/setup-python@v2
         with:
           python-verison: 3.7
     
