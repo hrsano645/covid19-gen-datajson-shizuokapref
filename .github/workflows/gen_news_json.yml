@@ -21,10 +21,10 @@ jobs:
           ref: issue#10-add_news_json
 
       # Runs a single command using the runners shell
-      - name: Set up Python 3.7
+      - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
-          python-verison: 3.7
+          python-verison: 3.8
     
       # Runs a set of commands using the runners shell
       - name: Install dependencies
