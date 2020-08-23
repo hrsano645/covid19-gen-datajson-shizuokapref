@@ -1,6 +1,6 @@
 # manual action 
 
-name: "test"
+name: "generate_news_json"
 
 on:
   workflow_dispatch:
@@ -30,12 +30,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 black pytest
-
+          pip install pipenv
+          pipenv install
 
     # Runs a single command using the runners shell
       - name: Run gen_newsjson.py
-        run: python gen_newsjson.py
+        run: pipenv run gen_newsjson.py
         
       - name: file upload
         uses: actions/upload-artifact@v2
