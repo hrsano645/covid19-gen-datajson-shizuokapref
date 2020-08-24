@@ -34,7 +34,7 @@ jobs:
 
     # Runs a single command using the runners shell
       - name: Run gen_newsjson.py
-        run: pipenv run gen_newsjson.py
+        run: python gen_newsjson.py
         
       - name: file upload
         uses: actions/upload-artifact@v2
