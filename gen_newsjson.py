@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 TARGET_URL = "https://www.pref.shizuoka.jp/kinkyu/covid-19.html"
 
 NEW_ITEM_PTAG_SELECTOR = (
-    "#tmp_read_contents > table:nth-child(4) > tbody > tr:nth-child(2) > td p"
+    "#tmp_read_contents > table:nth-child(5) > tbody > tr:nth-child(2) > td p"
 )
 # 出力するファイル名
 FILE_NAME = "news.json"
