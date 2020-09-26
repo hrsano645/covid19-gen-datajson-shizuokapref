@@ -63,7 +63,7 @@ def main():
 
         item = {
             # 日付文字列の先頭に"・"、最後に" "があるから省く
-            "date": news_p_tag[1:-1],
+            "date": news_p_tag.strip()[1:],
             "url": news_link,
             "text": news_a_tag.text,
         }
