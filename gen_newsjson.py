@@ -25,7 +25,7 @@ def search_news_list(bs: BeautifulSoup) -> list:
     > ・9/23 川勝知事からのメッセージを掲載しました
     """
 
-    return bs.find_all(text=re.compile("・\\d{1,2}/\\d{1,2} .*"))
+    return bs.find_all(text=re.compile("・\\d{1,2}/\\d{1,2}.*"))
 
 
 def main():
