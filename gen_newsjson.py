@@ -69,11 +69,6 @@ def main():
         }
         news_list.append(item)
 
-    # from pprint import pprint
-
-    # pprint(news_list)
-    # exit()
-
     # ここまで来たらjsonファイルに保存する
     with open(FILE_NAME, "w", encoding="utf-8") as newsjson:
         json.dump({"newsItems": news_list}, newsjson, ensure_ascii=False, indent=4)
