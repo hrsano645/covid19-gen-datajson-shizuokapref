@@ -232,6 +232,10 @@ def main():
     summary_count_taiin = 0  # 退院
     summary_count_shibo = 0  # 死亡
 
+    # TODO:2020-09-29 現在対応中の課題の一時的な対応のために数字の調整
+    summary_count_shibo += 1
+    summary_count_taiin -= 1
+
     # data.jsonルートのデータ構造を取得
     root_json = json.loads(ROOT_JSON_TEMPLATE)
 
