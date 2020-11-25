@@ -256,6 +256,7 @@ def main():
     ) as details_of_confirmed_cases_file:
         case_count_csv = csv.DictReader(details_of_confirmed_cases_file)
 
+        # コードの参考: https://github.com/aktnk/covid19/issues/44#issue-750619115
         case_count_list = {str(r["コード"]): int(r["人数"]) for r in case_count_csv}
 
         summary_count_kanzya = (
