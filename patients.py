@@ -200,7 +200,6 @@ def gen_datelist(start_datetime, end_datetime):
 def main():
 
     # 時間関係の生成
-
     dt_now = datetime.now()
     start_datetime = datetime.strptime("2020-01-22", "%Y-%m-%d").date()
 
@@ -219,6 +218,7 @@ def main():
     call_center_filename = "./" + args[2]
     patients_filename = "./" + args[1]
     inspections_summary_filename = "./" + args[3]
+    details_of_confirmed_cases_filename = "./" + args[4]
 
     # main_summary用の変数
     date_n = []  # 陽性者数をカウントする際に利用する
@@ -233,8 +233,8 @@ def main():
     summary_count_shibo = 0  # 死亡
 
     # TODO:2020-09-29 現在対応中の課題の一時的な対応のために数字の調整
-    summary_count_shibo += 1
-    summary_count_taiin -= 1
+    # summary_count_shibo += 1
+    # summary_count_taiin -= 1
 
     # data.jsonルートのデータ構造を取得
     root_json = json.loads(ROOT_JSON_TEMPLATE)
@@ -245,6 +245,33 @@ def main():
     root_json["patients_summary"]["date"] = latest_datetime_str
     root_json["inspections_summary"]["date"] = latest_datetime_str
     root_json["lastUpdate"] = latest_datetime_str
+
+    #
+    # 検査陽性者の状況
+    # details_of_confirmed_cases.csvからmain_summaryの数字を生成
+    #
+
+    with open(
+        details_of_confirmed_cases_filename, "r", encoding="shift-jis"
+    ) as details_of_confirmed_cases_file:
+        case_count_csv = csv.DictReader(details_of_confirmed_cases_file)
+
+        case_count_list = {str(r["コード"]): int(r["人数"]) for r in case_count_csv}
+
+        summary_count_kanzya = (
+            case_count_list["0"]
+            + case_count_list["2"]
+            + case_count_list["3"]
+            + case_count_list["4"]
+            + case_count_list["5"]
+        )  # 陽性患者数 = 入院 + 療養 + 調整中 + 死亡 + 退院
+        summary_count_nyuin = case_count_list["0"]  # 入院中
+        summary_count_keisyo = case_count_list["0"] - case_count_list["1"]  # 軽症・中症
+        summary_count_zyusyo = case_count_list["1"]  # 重症
+        summary_count_syukuhaku = case_count_list["2"]  # 宿泊療養
+        summary_count_tyosei = case_count_list["3"]  # 入院・療養等調整中
+        summary_count_shibo = case_count_list["4"]  # 死亡
+        summary_count_taiin = case_count_list["5"]  # 退院
 
     #
     # querents: 検査件数
@@ -343,28 +370,28 @@ def main():
 
             if patients_row["患者_退院済フラグ"] == "1":
                 patients_data_json["退院"] = "〇"
-                summary_count_taiin += 1
-            elif patients_row["患者_退院済フラグ"] == "2":
-                summary_count_syukuhaku += 1
-            elif patients_row["患者_退院済フラグ"] == "3":
-                summary_count_tyosei += 1
+                # summary_count_taiin += 1
+            # elif patients_row["患者_退院済フラグ"] == "2":
+            #     # summary_count_syukuhaku += 1
+            # elif patients_row["患者_退院済フラグ"] == "3":
+            #     # summary_count_tyosei += 1
             else:
                 # 空白、それ以外の値の場合の場合
                 # patients_row["患者_退院済フラグ"] == "0"を含む
                 patients_data_json["退院"] = ""
-                summary_count_nyuin += 1
+            #     # summary_count_nyuin += 1
 
-                if patients_row["患者_状態"] == "軽症・中等症":
-                    summary_count_keisyo += 1
-                if patients_row["患者_状態"] == "重症":
-                    summary_count_zyusyo += 1
-                if patients_row["患者_状態"] == "死亡":
-                    summary_count_shibo += 1
-                    summary_count_nyuin -= 1
+            #     if patients_row["患者_状態"] == "軽症・中等症":
+            #         # summary_count_keisyo += 1
+            #     if patients_row["患者_状態"] == "重症":
+            #         # summary_count_zyusyo += 1
+            #     if patients_row["患者_状態"] == "死亡":
+            #         # summary_count_shibo += 1
+            #         # summary_count_nyuin -= 1
 
             patients_data_json["date"] = patients_date_jsonstr
 
-            summary_count_kanzya += 1
+            # summary_count_kanzya += 1
             patients_data_list.append(patients_data_json)
 
     # ルートのpatients > dataに結合する
