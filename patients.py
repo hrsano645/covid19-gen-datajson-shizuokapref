@@ -232,10 +232,6 @@ def main():
     summary_count_taiin = 0  # 退院
     summary_count_shibo = 0  # 死亡
 
-    # TODO:2020-09-29 現在対応中の課題の一時的な対応のために数字の調整
-    # summary_count_shibo += 1
-    # summary_count_taiin -= 1
-
     # data.jsonルートのデータ構造を取得
     root_json = json.loads(ROOT_JSON_TEMPLATE)
 
@@ -365,34 +361,15 @@ def main():
             patients_data_json["年代"] = replace_nendai_format(patients_row["患者_年代"])
             patients_data_json["性別"] = patients_row["患者_性別"]
 
-            # main_summary の必要な情報も取得している
-            # TODO:2020-08-03 この部分は条件と処理をマッピングして探索できるようにしたほうがいい。（テストできるので）
-            # TODO:2020-08-03 またこのカウント処理はこの中でやらずに分離したほうが良いと思う。
-
             if patients_row["患者_退院済フラグ"] == "1":
                 patients_data_json["退院"] = "〇"
-                # summary_count_taiin += 1
-            # elif patients_row["患者_退院済フラグ"] == "2":
-            #     # summary_count_syukuhaku += 1
-            # elif patients_row["患者_退院済フラグ"] == "3":
-            #     # summary_count_tyosei += 1
             else:
                 # 空白、それ以外の値の場合の場合
                 # patients_row["患者_退院済フラグ"] == "0"を含む
                 patients_data_json["退院"] = ""
-            #     # summary_count_nyuin += 1
-
-            #     if patients_row["患者_状態"] == "軽症・中等症":
-            #         # summary_count_keisyo += 1
-            #     if patients_row["患者_状態"] == "重症":
-            #         # summary_count_zyusyo += 1
-            #     if patients_row["患者_状態"] == "死亡":
-            #         # summary_count_shibo += 1
-            #         # summary_count_nyuin -= 1
 
             patients_data_json["date"] = patients_date_jsonstr
 
-            # summary_count_kanzya += 1
             patients_data_list.append(patients_data_json)
 
     # ルートのpatients > dataに結合する
