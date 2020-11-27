@@ -197,6 +197,41 @@ def gen_datelist(start_datetime, end_datetime):
     ]
 
 
+def gen_main_summary_data(details_of_confirmed_cases_filename: str):
+    """
+    オープンデータを元にmain_summaryの数値を生成する
+    ダウンロードしたファイルを読み込み結果を出力
+
+    結果は辞書形式で、「検査陽性者の状況」の項目名をキーとする
+    """
+
+    with open(
+        details_of_confirmed_cases_filename, "r", encoding="shift-jis"
+    ) as details_of_confirmed_cases_file:
+        case_count_csv = csv.DictReader(details_of_confirmed_cases_file)
+
+        # コードの参考: https://github.com/aktnk/covid19/issues/44#issue-750619115
+        case_count_list = {str(r["コード"]): int(r["人数"]) for r in case_count_csv}
+
+        return {
+            "陽性患者数": (
+                case_count_list["0"]
+                + case_count_list["2"]
+                + case_count_list["3"]
+                + case_count_list["4"]
+                + case_count_list["5"]
+            ),  # 陽性患者数 = 入院 + 療養 + 調整中 + 死亡 + 退院
+            "入院中": case_count_list["0"],
+            "軽症・中等症": case_count_list["0"]
+            - case_count_list["1"],  # 軽症・中等症 = 入院中 - うち重症
+            "重症": case_count_list["1"],
+            "宿泊療養": case_count_list["2"],
+            "入院・療養等調整中": case_count_list["3"],
+            "死亡": case_count_list["4"],
+            "退院": case_count_list["5"],
+        }
+
+
 def main():
 
     # 時間関係の生成
@@ -222,15 +257,6 @@ def main():
 
     # main_summary用の変数
     date_n = []  # 陽性者数をカウントする際に利用する
-    summary_count_kensa = 0  # 検査実施人数
-    summary_count_kanzya = 0  # 陽性患者数
-    summary_count_nyuin = 0  # 入院中
-    summary_count_keisyo = 0  # 軽症・中症
-    summary_count_zyusyo = 0  # 重症
-    summary_count_syukuhaku = 0  # 宿泊療養
-    summary_count_tyosei = 0  # 入院・療養等調整中
-    summary_count_taiin = 0  # 退院
-    summary_count_shibo = 0  # 死亡
 
     # data.jsonルートのデータ構造を取得
     root_json = json.loads(ROOT_JSON_TEMPLATE)
@@ -241,34 +267,6 @@ def main():
     root_json["patients_summary"]["date"] = latest_datetime_str
     root_json["inspections_summary"]["date"] = latest_datetime_str
     root_json["lastUpdate"] = latest_datetime_str
-
-    #
-    # 検査陽性者の状況
-    # details_of_confirmed_cases.csvからmain_summaryの数字を生成
-    #
-
-    with open(
-        details_of_confirmed_cases_filename, "r", encoding="shift-jis"
-    ) as details_of_confirmed_cases_file:
-        case_count_csv = csv.DictReader(details_of_confirmed_cases_file)
-
-        # コードの参考: https://github.com/aktnk/covid19/issues/44#issue-750619115
-        case_count_list = {str(r["コード"]): int(r["人数"]) for r in case_count_csv}
-
-        summary_count_kanzya = (
-            case_count_list["0"]
-            + case_count_list["2"]
-            + case_count_list["3"]
-            + case_count_list["4"]
-            + case_count_list["5"]
-        )  # 陽性患者数 = 入院 + 療養 + 調整中 + 死亡 + 退院
-        summary_count_nyuin = case_count_list["0"]  # 入院中
-        summary_count_keisyo = case_count_list["0"] - case_count_list["1"]  # 軽症・中症
-        summary_count_zyusyo = case_count_list["1"]  # 重症
-        summary_count_syukuhaku = case_count_list["2"]  # 宿泊療養
-        summary_count_tyosei = case_count_list["3"]  # 入院・療養等調整中
-        summary_count_shibo = case_count_list["4"]  # 死亡
-        summary_count_taiin = case_count_list["5"]  # 退院
 
     #
     # querents: 検査件数
@@ -466,6 +464,7 @@ def main():
 
     #
     # main_summary
+    # details_of_confirmed_cases.csvからmain_summaryの数字を生成
     #
 
     main_summary_root_json = json.loads(MAIN_SUMMARY_JSON_TEMPLATE)
@@ -479,23 +478,28 @@ def main():
     main_summary_d3 = main_summary_d2[0]["children"]
 
     # 検査実施人数
-    main_summary_root_json["value"] = summary_count_kensa
+    # INFO:2020-11-27 この数値は現在利用されていないが互換性のために0を入れておく
+    main_summary_root_json["value"] = 0
+
+    # 各数字の生成
+    main_summary_counts = gen_main_summary_data(details_of_confirmed_cases_filename)
+
     # 陽性患者数
-    main_summary_d1[0]["value"] = summary_count_kanzya
+    main_summary_d1[0]["value"] = main_summary_counts["陽性患者数"]
     # 入院中
-    main_summary_d2[0]["value"] = summary_count_nyuin
+    main_summary_d2[0]["value"] = main_summary_counts["入院中"]
     # 軽症・中等症
-    main_summary_d3[0]["value"] = summary_count_keisyo
+    main_summary_d3[0]["value"] = main_summary_counts["軽症・中等症"]
     # 重症
-    main_summary_d3[1]["value"] = summary_count_zyusyo
+    main_summary_d3[1]["value"] = main_summary_counts["重症"]
     # 宿泊療養
-    main_summary_d2[1]["value"] = summary_count_syukuhaku
+    main_summary_d2[1]["value"] = main_summary_counts["宿泊療養"]
     # 入院・療養等調整中 / 調査中
-    main_summary_d2[2]["value"] = summary_count_tyosei
-    # 退院
-    main_summary_d2[3]["value"] = summary_count_shibo
+    main_summary_d2[2]["value"] = main_summary_counts["入院・療養等調整中"]
     # 死亡
-    main_summary_d2[4]["value"] = summary_count_taiin
+    main_summary_d2[3]["value"] = main_summary_counts["死亡"]
+    # 退院
+    main_summary_d2[4]["value"] = main_summary_counts["退院"]
 
     # ルートのmain_summaryに結合する
     root_json["main_summary"].update(main_summary_root_json)
