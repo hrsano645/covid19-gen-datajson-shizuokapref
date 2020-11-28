@@ -197,10 +197,55 @@ def gen_datelist(start_datetime, end_datetime):
     ]
 
 
+def gen_main_summary_data(details_of_confirmed_cases_filename: str):
+    """
+    オープンデータを元にmain_summaryの数値を生成する
+    ダウンロードしたファイルを読み込み結果を出力
+
+    結果は辞書形式で、「検査陽性者の状況」の項目名をキーとする
+
+    コードとコードの意味との対応一覧
+    ----
+
+    入院: 0
+    うち重症: 1
+    宿泊療養: 2
+    入院等調整中: 3
+    死亡: 4
+    退院: 5
+
+
+    """
+
+    with open(
+        details_of_confirmed_cases_filename, "r", encoding="shift-jis"
+    ) as details_of_confirmed_cases_file:
+        case_count_csv = csv.DictReader(details_of_confirmed_cases_file)
+
+        case_count_list = {str(r["コード"]): int(r["人数"]) for r in case_count_csv}
+
+        return {
+            "陽性患者数": (
+                case_count_list["0"]
+                + case_count_list["2"]
+                + case_count_list["3"]
+                + case_count_list["4"]
+                + case_count_list["5"]
+            ),  # 陽性患者数 = 入院 + 療養 + 調整中 + 死亡 + 退院
+            "入院中": case_count_list["0"],
+            "軽症・中等症": case_count_list["0"]
+            - case_count_list["1"],  # 軽症・中等症 = 入院中 - うち重症
+            "重症": case_count_list["1"],
+            "宿泊療養": case_count_list["2"],
+            "入院・療養等調整中": case_count_list["3"],
+            "死亡": case_count_list["4"],
+            "退院": case_count_list["5"],
+        }
+
+
 def main():
 
     # 時間関係の生成
-
     dt_now = datetime.now()
     start_datetime = datetime.strptime("2020-01-22", "%Y-%m-%d").date()
 
@@ -219,22 +264,10 @@ def main():
     call_center_filename = "./" + args[2]
     patients_filename = "./" + args[1]
     inspections_summary_filename = "./" + args[3]
+    details_of_confirmed_cases_filename = "./" + args[4]
 
     # main_summary用の変数
     date_n = []  # 陽性者数をカウントする際に利用する
-    summary_count_kensa = 0  # 検査実施人数
-    summary_count_kanzya = 0  # 陽性患者数
-    summary_count_nyuin = 0  # 入院中
-    summary_count_keisyo = 0  # 軽症・中症
-    summary_count_zyusyo = 0  # 重症
-    summary_count_syukuhaku = 0  # 宿泊療養
-    summary_count_tyosei = 0  # 入院・療養等調整中
-    summary_count_taiin = 0  # 退院
-    summary_count_shibo = 0  # 死亡
-
-    # TODO:2020-09-29 現在対応中の課題の一時的な対応のために数字の調整
-    summary_count_shibo += 1
-    summary_count_taiin -= 1
 
     # data.jsonルートのデータ構造を取得
     root_json = json.loads(ROOT_JSON_TEMPLATE)
@@ -337,34 +370,15 @@ def main():
             patients_data_json["年代"] = replace_nendai_format(patients_row["患者_年代"])
             patients_data_json["性別"] = patients_row["患者_性別"]
 
-            # main_summary の必要な情報も取得している
-            # TODO:2020-08-03 この部分は条件と処理をマッピングして探索できるようにしたほうがいい。（テストできるので）
-            # TODO:2020-08-03 またこのカウント処理はこの中でやらずに分離したほうが良いと思う。
-
             if patients_row["患者_退院済フラグ"] == "1":
                 patients_data_json["退院"] = "〇"
-                summary_count_taiin += 1
-            elif patients_row["患者_退院済フラグ"] == "2":
-                summary_count_syukuhaku += 1
-            elif patients_row["患者_退院済フラグ"] == "3":
-                summary_count_tyosei += 1
             else:
                 # 空白、それ以外の値の場合の場合
                 # patients_row["患者_退院済フラグ"] == "0"を含む
                 patients_data_json["退院"] = ""
-                summary_count_nyuin += 1
-
-                if patients_row["患者_状態"] == "軽症・中等症":
-                    summary_count_keisyo += 1
-                if patients_row["患者_状態"] == "重症":
-                    summary_count_zyusyo += 1
-                if patients_row["患者_状態"] == "死亡":
-                    summary_count_shibo += 1
-                    summary_count_nyuin -= 1
 
             patients_data_json["date"] = patients_date_jsonstr
 
-            summary_count_kanzya += 1
             patients_data_list.append(patients_data_json)
 
     # ルートのpatients > dataに結合する
@@ -461,6 +475,7 @@ def main():
 
     #
     # main_summary
+    # details_of_confirmed_cases.csvからmain_summaryの数字を生成
     #
 
     main_summary_root_json = json.loads(MAIN_SUMMARY_JSON_TEMPLATE)
@@ -474,23 +489,28 @@ def main():
     main_summary_d3 = main_summary_d2[0]["children"]
 
     # 検査実施人数
-    main_summary_root_json["value"] = summary_count_kensa
+    # INFO:2020-11-27 この数値は現在利用されていないが互換性のために0を入れておく
+    main_summary_root_json["value"] = 0
+
+    # 各数字の生成
+    main_summary_counts = gen_main_summary_data(details_of_confirmed_cases_filename)
+
     # 陽性患者数
-    main_summary_d1[0]["value"] = summary_count_kanzya
+    main_summary_d1[0]["value"] = main_summary_counts["陽性患者数"]
     # 入院中
-    main_summary_d2[0]["value"] = summary_count_nyuin
+    main_summary_d2[0]["value"] = main_summary_counts["入院中"]
     # 軽症・中等症
-    main_summary_d3[0]["value"] = summary_count_keisyo
+    main_summary_d3[0]["value"] = main_summary_counts["軽症・中等症"]
     # 重症
-    main_summary_d3[1]["value"] = summary_count_zyusyo
+    main_summary_d3[1]["value"] = main_summary_counts["重症"]
     # 宿泊療養
-    main_summary_d2[1]["value"] = summary_count_syukuhaku
+    main_summary_d2[1]["value"] = main_summary_counts["宿泊療養"]
     # 入院・療養等調整中 / 調査中
-    main_summary_d2[2]["value"] = summary_count_tyosei
-    # 退院
-    main_summary_d2[3]["value"] = summary_count_shibo
+    main_summary_d2[2]["value"] = main_summary_counts["入院・療養等調整中"]
     # 死亡
-    main_summary_d2[4]["value"] = summary_count_taiin
+    main_summary_d2[3]["value"] = main_summary_counts["死亡"]
+    # 退院
+    main_summary_d2[4]["value"] = main_summary_counts["退院"]
 
     # ルートのmain_summaryに結合する
     root_json["main_summary"].update(main_summary_root_json)
