@@ -261,11 +261,17 @@ def main():
     end_datetime = tomorrow.date()
 
     # 引数からファイル名を取得
+    # TODO:2021-01-17 引数が複雑になりつつあるので、ライブラリ(argperserかclickなど）を入れて整理する
     args = sys.argv
     call_center_filename = "./" + args[2]
     patients_filename = "./" + args[1]
     inspections_summary_filename = "./" + args[3]
     details_of_confirmed_cases_filename = "./" + args[4]
+
+    # 市区町村名が指定された場合は取得する
+    local_name = None
+    if len(args) == 6:
+        local_name = args[5]
 
     # main_summary用の変数
     date_n = []  # 陽性者数をカウントする際に利用する
@@ -342,6 +348,10 @@ def main():
 
         for patients_row in patients_csv:
 
+            # 地域別フィルターを行う。 文字列は部分一致で行う
+            if local_name and local_name not in patients_row["患者_居住地"]:
+                continue
+
             # 日付の正規化
             validate_result_date = validate_opendata_dateformat(patients_row["公表_年月日"])
 
@@ -388,6 +398,8 @@ def main():
     #
     # patients_summary: 陽性者サマリー（人数
     #
+
+    # TODO:2021-01-17 陽性者属性の出現開始時期からにしたほうがいいと思う
 
     # startからendまでの毎日の日付と、陽性者数の数を生成する数は0で初期化
     patients_day_of_count_list = {
