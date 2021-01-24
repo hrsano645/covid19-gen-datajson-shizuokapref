@@ -457,7 +457,7 @@ def main():
             inspections_summary_labels.append(
                 "/".join(
                     n_s.lstrip("0")
-                    for n_s in inspections_summary_date.strftime("%m/%d").split("/")
+                    for n_s in inspections_summary_date.strftime("%Y/%m/%d").split("/")
                 )
             )
 
