@@ -382,6 +382,9 @@ def main():
 
             patients_data_list.append(patients_data_json)
 
+    # patients.csv の最後に読み取ったデータの日付を保存（issue#37対応）
+    end_datetime = patients_date.date()
+    
     # ルートのpatients > dataに結合する
     root_json["patients"]["data"].extend(patients_data_list)
 
