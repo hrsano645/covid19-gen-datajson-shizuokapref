@@ -425,9 +425,10 @@ def main():
 
         # 1行目は4/26までの累計を記入
 
+        # 20210116 項目名変更に対応
         root_json["inspections_summary"]["initial_cumulative"]["count"] = int(
-            inspections_summary_csv[0]["検査実施_件数\n（地方衛生研究所）"].replace(",", "")
-        ) + int(inspections_summary_csv[0]["検査実施_件数\n（医療機関等）"].replace(",", ""))
+            inspections_summary_csv[0]["検査実施_人数\n（医療機関等）"].replace(",", "")
+        ) + int(inspections_summary_csv[0]["検査実施_人数\n（保健所）"].replace(",", ""))
 
         # 2行目以降は日時データとして処理
 
@@ -456,18 +457,20 @@ def main():
             inspections_summary_labels.append(
                 "/".join(
                     n_s.lstrip("0")
-                    for n_s in inspections_summary_date.strftime("%m/%d").split("/")
+                    for n_s in inspections_summary_date.strftime("%Y/%m/%d").split("/")
                 )
             )
 
+            # 20210116 項目名変更に対応
             # 件数:検査実施_件数 （医療機関等）の追加
             inspections_summary_dataset["医療機関等"].append(
-                int(inspections_summary_row["検査実施_件数\n（医療機関等）"].replace(",", ""))
+                int(inspections_summary_row["検査実施_人数\n（医療機関等）"].replace(",", ""))
             )
 
+            # 20210116 項目名変更に対応
             # 件数:検査実施_件数 （地方衛生研究所）の追加
             inspections_summary_dataset["地方衛生研究所"].append(
-                int(inspections_summary_row["検査実施_件数\n（地方衛生研究所）"].replace(",", ""))
+                int(inspections_summary_row["検査実施_人数\n（保健所）"].replace(",", ""))
             )
 
     # データの更新
