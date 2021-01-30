@@ -338,10 +338,14 @@ def main():
 
     patients_data_list = list()
     with open(patients_filename, "r", encoding="shift-jis") as patients_file:
+
+        # TODO:2021-01-30: issue#39参照 オープンデータ側に説明情報が追加されているのでその行数を無視する
+        for _ in range(8):
+            next(patients_file)
+
         patients_csv = csv.DictReader(patients_file)
 
         for patients_row in patients_csv:
-
             # 日付の正規化
             validate_result_date = validate_opendata_dateformat(patients_row["公表_年月日"])
 
