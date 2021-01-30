@@ -267,6 +267,11 @@ def main():
     inspections_summary_filename = "./" + args[3]
     details_of_confirmed_cases_filename = "./" + args[4]
 
+    # 市区町村名が指定された場合は取得する
+    local_name = None
+    if len(args) == 6:
+        local_name = args[5]
+
     # main_summary用の変数
     date_n = []  # 陽性者数をカウントする際に利用する
 
@@ -346,6 +351,11 @@ def main():
         patients_csv = csv.DictReader(patients_file)
 
         for patients_row in patients_csv:
+
+            # 地域別フィルターを行う。 文字列は部分一致で行う
+            if local_name and local_name not in patients_row["患者_居住地"]:
+                continue
+
             # 日付の正規化
             validate_result_date = validate_opendata_dateformat(patients_row["公表_年月日"])
 
@@ -388,7 +398,7 @@ def main():
 
     # patients.csv の最後に読み取ったデータの日付を保存（issue#37対応）
     end_datetime = patients_date.date()
-    
+
     # ルートのpatients > dataに結合する
     root_json["patients"]["data"].extend(patients_data_list)
 
