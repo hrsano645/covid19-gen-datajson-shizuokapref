@@ -64,7 +64,11 @@ MAIN_SUMMARY_JSON_TEMPLATE = """
                     "value": 0
                 },
                 {
-                    "attr": "入院・療養等調整中",
+                    "attr": "自宅療養",
+                    "value": 0
+                },
+                {
+                    "attr": "入院等調整中",
                     "value": 0
                 },
                 {
@@ -210,9 +214,10 @@ def gen_main_summary_data(details_of_confirmed_cases_filename: str):
     入院: 0
     うち重症: 1
     宿泊療養: 2
-    入院等調整中: 3
-    死亡: 4
-    退院: 5
+    自宅療養: 3
+    入院等調整中: 4
+    死亡: 5
+    退院: 6
 
 
     """
@@ -232,15 +237,17 @@ def gen_main_summary_data(details_of_confirmed_cases_filename: str):
                 + case_count_list["3"]
                 + case_count_list["4"]
                 + case_count_list["5"]
+                + case_count_list["6"]
             ),  # 陽性患者数 = 入院 + 療養 + 調整中 + 死亡 + 退院
             "入院中": case_count_list["0"],
             "軽症・中等症": case_count_list["0"]
             - case_count_list["1"],  # 軽症・中等症 = 入院中 - うち重症
             "重症": case_count_list["1"],
             "宿泊療養": case_count_list["2"],
-            "入院・療養等調整中": case_count_list["3"],
-            "死亡": case_count_list["4"],
-            "退院": case_count_list["5"],
+            "自宅療養": case_count_list["3"],
+            "入院等調整中": case_count_list["4"],
+            "死亡": case_count_list["5"],
+            "退院": case_count_list["6"],
         }
 
 
@@ -526,12 +533,14 @@ def main():
     main_summary_d3[1]["value"] = main_summary_counts["重症"]
     # 宿泊療養
     main_summary_d2[1]["value"] = main_summary_counts["宿泊療養"]
-    # 入院・療養等調整中 / 調査中
-    main_summary_d2[2]["value"] = main_summary_counts["入院・療養等調整中"]
+    # 自宅療養
+    main_summary_d2[2]["value"] = main_summary_counts["自宅療養"]
+    # 入院等調整中
+    main_summary_d2[3]["value"] = main_summary_counts["入院等調整中"]
     # 死亡
-    main_summary_d2[3]["value"] = main_summary_counts["死亡"]
+    main_summary_d2[4]["value"] = main_summary_counts["死亡"]
     # 退院
-    main_summary_d2[4]["value"] = main_summary_counts["退院"]
+    main_summary_d2[5]["value"] = main_summary_counts["退院"]
 
     # ルートのmain_summaryに結合する
     root_json["main_summary"].update(main_summary_root_json)
