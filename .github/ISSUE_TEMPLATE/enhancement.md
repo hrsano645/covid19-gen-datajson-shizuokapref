@@ -2,7 +2,7 @@
 name: 課題提案
 about: 改善したい内容についてはこちらに共有
 title: ''
-labels: bug
+labels: enhancement
 assignees: ''
 
 ---
