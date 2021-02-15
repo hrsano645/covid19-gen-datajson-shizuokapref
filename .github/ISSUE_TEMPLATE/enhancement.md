@@ -1,13 +1,13 @@
 ---
-name: 課題/バグ報告
-about: 議論するべきことや、不具合についてはこちら
+name: 課題提案
+about: 改善したい内容についてはこちらに共有
 title: ''
 labels: bug
 assignees: ''
 
 ---
 
-## 🐞課題の詳細
+## 💡課題の詳細
 - xxxx(できるだけ簡潔に/as concise as possible)
 
 ## 📸スクリーンショット / Screenshot
@@ -16,10 +16,3 @@ assignees: ''
 ## ⛏ 課題の解決方法案
 - xxxx(できるだけ簡潔に/as concise as possible)
 
-
-## 問題の再現手段 / Steps to Reproduce
-<!-- 問題の再現方法があれば手順を教えてください。 -->
-
-1. xxx
-2. xxx
-3. xxx
