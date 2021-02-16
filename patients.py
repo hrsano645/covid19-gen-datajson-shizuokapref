@@ -228,7 +228,7 @@ def gen_main_summary_data(details_of_confirmed_cases_filename: str):
         case_count_csv = list(csv.DictReader(details_of_confirmed_cases_file))
 
         # 読み込むCSVファイルの行数を指定
-        case_count_list = {str(r["コード"]): int(r["人数"]) for r in case_count_csv[:6]}
+        case_count_list = {str(r["コード"]): int(r["人数"]) for r in case_count_csv[:7]}
 
         return {
             "陽性患者数": (
