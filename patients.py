@@ -94,13 +94,19 @@ def gen_datelist(start_datetime: datetime, end_datetime: datetime) -> list:
 
 
 def change_datetimestr_zeropadding(target_datetime: datetime) -> str:
-    # pythonの日付書式フォーマットだとゼロ埋めとなるので、一度分解して左側のゼロを消して文字列に戻す（力技です）
+    """
+    pythonの日付書式フォーマットだとゼロ埋めとなるので、一度分解して左側のゼロを消して文字列に戻す（力技です）
+    """
+
     return "/".join(
         n_s.lstrip("0") for n_s in target_datetime.strftime("%Y/%m/%d").split("/")
     )
 
 
-def gen_jsonformat_datetime(t_datetime):
+def gen_jsonformat_datetime(t_datetime: datetime) -> str:
+    """
+    datetimeオブジェクトをjsonの日付フォーマットに変換する
+    """
     return t_datetime.strftime("%Y-%m-%d") + "T08:00:00.000Z"
 
 
@@ -155,20 +161,28 @@ def parse_details_of_confirmed_cases(filename: str) -> dict:
 
 
 def parse_call_center(filename):
-    # CSVファイルの行列を生成する
+    """
+    call_center.csvを読み込んで表データを作成する
+    """
     with open(filename, "r", encoding="shift-jis") as call_center_file:
         call_center_csv = csv.DictReader(call_center_file)
         return list(call_center_csv)
 
 
 def parse_inspections_summary(filename):
-    # CSVファイルの行列を生成する
+    
+    """
+    inspections_summary.csvを読み込んで表データを作成する
+    """
     with open(filename, "r", encoding="shift-jis") as inspections_summary_file:
         return list(csv.DictReader(inspections_summary_file))
 
 
 def parse_patients(filename):
-    # CSVファイルの行列を生成する
+    
+    """
+    patients.csvを読み込んで表データを作成する
+    """
     with open(filename, "r", encoding="shift-jis") as patients_file:
 
         # INFO:2021-01-30: issue#39参照 オープンデータ側に説明情報が追加されているのでその行数を無視する
@@ -180,9 +194,9 @@ def parse_patients(filename):
 
 
 def gen_querents(**dataset) -> dict:
-    #
-    # querents: 検査件数
-    #
+    """
+    data.json > querents: 検査件数のデータを生成する。
+    """
 
     # datasetに必要なデータがない場合にはNoneを返す
     if "call_center" not in dataset:
@@ -229,9 +243,9 @@ def gen_querents(**dataset) -> dict:
 
 
 def gen_patient(**dataset) -> dict:
-    #
-    # patients: 陽性者
-    #
+    """
+    data.json > patients: 陽性者のデータを生成する
+    """
 
     # datasetに必要なデータがない場合にはNoneを返す
     if "patients" not in dataset:
@@ -278,9 +292,9 @@ def gen_patient(**dataset) -> dict:
 
 
 def gen_patient_summary(start_dt, **dataset) -> dict:
-    #
-    # patients_summary: 陽性者サマリー（人数
-    #
+    """
+    data.json > patients_summary: 陽性者サマリー（人数
+    """
 
     # TODO: 2021/02/25 startの日付は現在は固定の日付だが、グラフの開始日になるのでpatientsの最初の日付に変更する
     #   issue#https://github.com/aktnk/covid19/issues/68 にて対応予定
@@ -330,6 +344,9 @@ def gen_patient_summary(start_dt, **dataset) -> dict:
 
 
 def gen_inspections_summary(**dataset) -> dict:
+    """
+    data.json > inspections_summary: 検査実施人数のデータを生成する
+    """
 
     # TODO:2021-02-23 このinspection_summaryが対策サイトとの名称通りかを確認する。（オープンデータファイル名としてはtest_numberとなってる）
     # datasetに必要なデータがない場合にはNoneを返す
@@ -356,8 +373,6 @@ def gen_inspections_summary(**dataset) -> dict:
     ) + int(inspections_summary[0]["検査実施_人数\n（保健所）"].replace(",", ""))
 
     # 2行目以降は日時データとして処理
-
-    # 検査実施件数グラフ の生成:
     # INFO:2020-06-18: Python3は日本語も引数名で利用できます。python2はできないので注意
     inspections_summary_data = dict(医療機関等=list(), 地方衛生研究所=list())
     inspections_summary_labels = list()
@@ -389,10 +404,9 @@ def gen_inspections_summary(**dataset) -> dict:
 
 
 def gen_main_summary(**dataset) -> dict:
-    #
-    # main_summary
-    # details_of_confirmed_cases.csvからmain_summaryの数字を生成
-    #
+    """
+    data.json > main_summary 検査陽性者の状況のデータを生成する
+    """
 
     # datasetに必要なデータがない場合にはNoneを返す
     if "details_of_confirmed_cases" not in dataset:
