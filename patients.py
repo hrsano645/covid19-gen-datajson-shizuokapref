@@ -113,7 +113,7 @@ def gen_jsonformat_datetime(t_datetime: datetime) -> str:
 # オープンデータの読み込みとパース処理
 def parse_details_of_confirmed_cases(filename: str) -> dict:
     """
-    オープンデータを元にmain_summaryの数値を生成する
+    オープンデータを元にmain_summary用の数値を生成する
     ダウンロードしたファイルを読み込み結果を出力
 
     結果は辞書形式で、「検査陽性者の状況」の項目名をキーとする
@@ -324,7 +324,7 @@ def gen_patient_summary(start_dt, **dataset) -> dict:
 
         patients_date_list.append(patients_date)
 
-    # 日ごとの陽性者数を生成
+    # 日ごとの陽性者数をカウントしてリスト作成
     patients_day_of_count_list = {d: 0 for d in gen_datelist(start_dt, end_datetime)}
     patients_day_of_count_list.update(Counter(patients_date_list))
 
