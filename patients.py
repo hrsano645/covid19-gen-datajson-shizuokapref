@@ -540,12 +540,6 @@ def main():
     inspections_summary_jsondata = gen_inspections_summary(**dataset)
     main_summary_jsondata = gen_main_summary(**dataset)
 
-    querents_jsondata = gen_querents(**dataset)
-    patient_jsondata = gen_patient(**dataset)
-    patient_summary_jsondata = gen_patient_summary(start_datetime, **dataset)
-    inspections_summary_jsondata = gen_inspections_summary(**dataset)
-    main_summary_jsondata = gen_main_summary(**dataset)
-
     # data.jsonルートのデータ構造を取得
     root_json_template = """
     {
