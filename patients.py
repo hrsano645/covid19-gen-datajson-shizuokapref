@@ -303,8 +303,9 @@ def gen_patient_summary(start_dt, **dataset) -> dict:
     if "patients" not in dataset:
         return None
     patients = dataset["patients"]
-    patients_date = validate_opendata_dateformat(dataset["patients"][-1]["公表_年月日"])
-    end_datetime = patients_date
+
+    # グラフの終了日時を生成
+    end_datetime = validate_opendata_dateformat(dataset["patients"][-1]["公表_年月日"])
 
     patients_summary_data_json_template = """
     {
