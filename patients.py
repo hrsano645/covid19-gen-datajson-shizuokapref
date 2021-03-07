@@ -93,7 +93,7 @@ def gen_datelist(start_datetime: datetime, end_datetime: datetime) -> list:
     ]
 
 
-def change_datetimestr_zeropadding(target_datetime: datetime) -> str:
+def suppress_zero(target_datetime: datetime) -> str:
     """
     pythonの日付書式フォーマットだとゼロ埋めとなるので、一度分解して左側のゼロを消して文字列に戻す（力技です）
     """
@@ -388,7 +388,7 @@ def gen_inspections_summary(**dataset) -> dict:
         if not inspections_summary_date:
             break
 
-        inspections_summary_labels.append(change_datetimestr_zeropadding(inspections_summary_date))
+        inspections_summary_labels.append(suppress_zero(inspections_summary_date))
 
         # 件数の追加
         inspections_summary_data["医療機関等"].append(
