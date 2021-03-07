@@ -1,5 +1,5 @@
 import datetime
-from patients import validate_opendata_dateformat
+from patients import validate_opendata_dateformat, gen_datelist
 
 import pytest
 
@@ -70,3 +70,18 @@ def make_rand_word(length):
 )
 def test_replace_nendai_format(input, expected):
     assert expected == replace_nendai_format(input)
+
+
+# 日付のリスト生成
+
+
+@pytest.mark.parametrize(
+    "start,end,expected",
+    [
+        (datetime.datetime(2021, 1, 1), datetime.datetime(2021, 1, 31), 31),
+        (datetime.datetime(2021, 1, 1), datetime.datetime(2021, 12, 31), 365),
+    ],
+)
+def test_gen_datelist(start, end, expected):
+    datelist = gen_datelist(start, end)
+    assert expected == len(datelist)
