@@ -1,20 +1,40 @@
 import datetime
-from patients import validate_opendata_dateformat, gen_datelist
+from patients import isvalid_opendata_dateformat, validate_dataset, gen_datelist
 
 import pytest
 
 from patients import replace_nendai_format
 
 import random
+import csv
 
 
 # 日付フォーマットのバリデート
 @pytest.mark.parametrize(
-    "data_str,expected",
-    [("2020/1/1", datetime.datetime(2020, 1, 1, 0, 0)), ("/2020/1/1", None)],
+    "data_str,expected", [("2020/1/1", True), ("/2020/1/1", False)],
 )
-def test_varidate_opendata_dadeformat(data_str, expected):
-    assert expected == validate_opendata_dateformat(data_str)
+def test_isvalid_opendata_dadeformat(data_str, expected):
+    assert expected == isvalid_opendata_dateformat(data_str)
+
+
+def test_validate_data():
+    # 実際のCSVファイルを元にバリデートをする
+    # バリデーション対象のデータ名, 列ヘッダ名と関係するバリデート関数をマッピング
+
+    with open(
+        "./tests/test_opendata/testdata_validate_call_center.csv",
+        "r",
+        encoding="shift-jis",
+    ) as test_csv:
+        testdata_csv_list = list(csv.DictReader(test_csv))
+
+    result = validate_dataset(
+        testdata_csv_list, {"受付_年月日": isvalid_opendata_dateformat}
+    )
+
+    assert len(result) == 2
+    assert result[0] == "/2020/2/12"
+    assert result[1] == "-2020/2/14"
 
 
 def make_rand_word(length):
@@ -73,8 +93,6 @@ def test_replace_nendai_format(input, expected):
 
 
 # 日付のリスト生成
-
-
 @pytest.mark.parametrize(
     "start,end,expected",
     [

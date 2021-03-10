@@ -60,26 +60,33 @@ def replace_nendai_format(src: str) -> str:
         return src.replace(target_rule.pattern, target_rule.newstr)
 
 
-def validate_opendata_dateformat(opendata_date_str: str) -> datetime:
+def isvalid_opendata_dateformat(opendata_date_str: str) -> bool:
     """
-    オープンデータの日付が正しいフォーマットか検証して、
-    正しいフォーマットの場合は datetimeで変換した値を返す
-    そうでなければNoneを返す
+    オープンデータの日付が正しいフォーマットか検証する。boolで結果を返す
     """
-
-    # 日付の正規化
-
     dateformat_pattern = re.compile(r"(\d{4})\/(\d{1,2})\/(\d{1,2})")
 
     validate_result = dateformat_pattern.match(opendata_date_str)
 
-    if not validate_result:
-        return None
+    if validate_result:
+        return True
     else:
-        result_ymd = validate_result.groups()
-        return datetime(
-            year=int(result_ymd[0]), month=int(result_ymd[1]), day=int(result_ymd[2]),
-        )
+        return False
+
+
+# バリデート結果でエラーを出すためのクラス
+class ValidateError(Exception):
+    """ バリデートエラーの基底クラス """
+
+    pass
+
+
+class DateValidateError(ValidateError):
+    """
+    日付のエラーを出すときの例外クラス
+    """
+
+    pass
 
 
 def gen_datelist(start_datetime: datetime, end_datetime: datetime) -> list:
@@ -170,7 +177,7 @@ def parse_call_center(filename):
 
 
 def parse_inspections_summary(filename):
-    
+
     """
     inspections_summary.csvを読み込んで表データを作成する
     """
@@ -179,7 +186,7 @@ def parse_inspections_summary(filename):
 
 
 def parse_patients(filename):
-    
+
     """
     patients.csvを読み込んで表データを作成する
     """
@@ -191,6 +198,23 @@ def parse_patients(filename):
 
         patients_csv = csv.DictReader(patients_file)
         return list(patients_csv)
+
+
+def validate_dataset(csv_list: list, func_map: dict) -> list:
+    """
+    オープンデータのバリデーションを行う。エラーを起こしている該当の文字列。
+    複数のバリデートに対応する。func_mapは辞書形式で、CSVファイルの列ラベルとバリデート関数を指定する必要がある
+
+    >>> func_map = {"公表_年月日": isvalid_opendata_dateformat}
+    """
+    validate_errors = list()
+
+    for row_header, validate_func in func_map.items():
+        for row in csv_list:
+            if not validate_func(row[row_header]):
+                validate_errors.append(row[row_header])
+
+    return validate_errors
 
 
 def gen_querents(**dataset) -> dict:
@@ -219,10 +243,7 @@ def gen_querents(**dataset) -> dict:
     querent_data_list = list()
     for call_center_row in call_center:
 
-        # 日付が破損していないかのチェック
-        querent_date = validate_opendata_dateformat(call_center_row["受付_年月日"])
-        if not querent_date:
-            break
+        querent_date = datetime.strptime(call_center_row["受付_年月日"], "%Y/%m/%d")
 
         # querents > dataのデータを生成
         querents_data_item = json.loads(querents_data_json_template)
@@ -266,10 +287,7 @@ def gen_patient(**dataset) -> dict:
     patients_data_list = list()
     for patients_row in patients:
 
-        # 日付が破損していないかのチェック
-        patients_date = validate_opendata_dateformat(patients_row["公表_年月日"])
-        if not patients_date:
-            break
+        patients_date = datetime.strptime(patients_row["公表_年月日"], "%Y/%m/%d")
 
         patients_data_item = json.loads(patients_data_json_template)
 
@@ -305,7 +323,7 @@ def gen_patient_summary(start_dt, **dataset) -> dict:
     patients = dataset["patients"]
 
     # グラフの終了日時を生成
-    end_datetime = validate_opendata_dateformat(dataset["patients"][-1]["公表_年月日"])
+    end_datetime = datetime.strptime(dataset["patients"][-1]["公表_年月日"], "%Y/%m/%d")
 
     patients_summary_data_json_template = """
     {
@@ -318,12 +336,7 @@ def gen_patient_summary(start_dt, **dataset) -> dict:
     patients_date_list = list()
     for patients_row in patients:
 
-        # 日付が破損していないかのチェック
-        patients_date = validate_opendata_dateformat(patients_row["公表_年月日"])
-        if not patients_date:
-            break
-
-        patients_date_list.append(patients_date)
+        patients_date_list.append(datetime.strptime(patients_row["公表_年月日"], "%Y/%m/%d"))
 
     # 日ごとの陽性者数をカウントしてリスト作成
     patients_day_of_count_list = {d: 0 for d in gen_datelist(start_dt, end_datetime)}
@@ -381,12 +394,9 @@ def gen_inspections_summary(**dataset) -> dict:
     for inspections_summary_row in inspections_summary[1:]:
 
         # labelsの生成
-        # 日付が破損していないかのチェック
-        inspections_summary_date = validate_opendata_dateformat(
-            inspections_summary_row["実施_年月日"]
+        inspections_summary_date = datetime.strptime(
+            inspections_summary_row["実施_年月日"], "%Y/%m/%d"
         )
-        if not inspections_summary_date:
-            break
 
         inspections_summary_labels.append(suppress_zero(inspections_summary_date))
 
@@ -508,7 +518,7 @@ def main():
     # 引数からファイル名を取得
     args = sys.argv
 
-    # オープンデータを読み込んでまとめてデータセットとして生成
+    # データのみをdatasetとしてまとめる
     dataset = {
         "call_center": parse_call_center("./" + args[2]),
         "patients": parse_patients("./" + args[1]),
@@ -516,15 +526,42 @@ def main():
         "details_of_confirmed_cases": parse_details_of_confirmed_cases("./" + args[4]),
     }
 
+    # バリデーション用のデータセットを作成、データセットの不要なデータを除去
+    _dataset = dataset.copy()
+    _dataset.pop("details_of_confirmed_cases")
+    # 検査実施件数の最初の行を外したリストを生成
+    _dataset["inspections_summary"] = dataset["inspections_summary"][1:]
+
+    # バリデーション対象のデータ名, 列ヘッダ名と関係するバリデート関数を辞書でマッピング
+    validate_funcmaps = {
+        "call_center": {"受付_年月日": isvalid_opendata_dateformat},
+        "patients": {"公表_年月日": isvalid_opendata_dateformat},
+        "inspections_summary": {"実施_年月日": isvalid_opendata_dateformat},
+    }
+
+    error_msg_body = ""
+    for data_name, funcmaps in validate_funcmaps.items():
+        # バリデーションのマップを元に対象の列名と関数を処理
+        validate_errors = validate_dataset(_dataset[data_name], funcmaps)
+        if validate_errors:
+            for error_str in validate_errors:
+                error_msg_body += "{}: {}\n".format(data_name, error_str)
+
+    if error_msg_body:
+        error_msg = "バリデーションの結果、処理出来ない行があります。処理を終了します。:\n"
+        error_msg += error_msg_body
+        raise DateValidateError(error_msg)
+
     # TODO:2021-02-25 地域別フィルターは現状は富士市のみなので富士市オンリーで対応
     # ニュース生成もこちら（もしくはモジュールロードして呼び出す形で）で行う
     # 地域ごとによって必要なデータがあるので、必要に応じて生成するしないを決められる方がいいと思う
 
+    # 地域別フィルタ
     local_name = None
     if len(args) == 6:
         local_name = args[5]
 
-    # patientsのみフィルター
+    # INFO:2021-03-09 patientsのみフィルター
     if local_name:
         if local_name in set([row["患者_居住地"] for row in dataset["patients"]]):
             dataset["patients"] = [
