@@ -172,8 +172,7 @@ def parse_call_center(filename):
     call_center.csvを読み込んで表データを作成する
     """
     with open(filename, "r", encoding="shift-jis") as call_center_file:
-        call_center_csv = csv.DictReader(call_center_file)
-        return list(call_center_csv)
+        return list(csv.DictReader(call_center_file))
 
 
 def parse_inspections_summary(filename):
@@ -196,8 +195,7 @@ def parse_patients(filename):
         for _ in range(8):
             next(patients_file)
 
-        patients_csv = csv.DictReader(patients_file)
-        return list(patients_csv)
+        return list(csv.DictReader(patients_file))
 
 
 def validate_dataset(csv_list: list, func_map: dict) -> list:
