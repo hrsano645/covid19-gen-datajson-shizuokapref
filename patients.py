@@ -518,6 +518,7 @@ def main():
     # 引数からファイル名を取得
     args = sys.argv
 
+    # ---[データセットの作成]---
     # データのみをdatasetとしてまとめる
     dataset = {
         "call_center": parse_call_center("./" + args[2]),
@@ -526,6 +527,7 @@ def main():
         "details_of_confirmed_cases": parse_details_of_confirmed_cases("./" + args[4]),
     }
 
+    # ---[各データセットのバリデーション]---
     # バリデーション用のデータセットを作成、データセットの不要なデータを除去
     _dataset = dataset.copy()
     _dataset.pop("details_of_confirmed_cases")
@@ -552,11 +554,7 @@ def main():
         error_msg += error_msg_body
         raise DateValidateError(error_msg)
 
-    # TODO:2021-02-25 地域別フィルターは現状は富士市のみなので富士市オンリーで対応
-    # ニュース生成もこちら（もしくはモジュールロードして呼び出す形で）で行う
-    # 地域ごとによって必要なデータがあるので、必要に応じて生成するしないを決められる方がいいと思う
-
-    # 地域別フィルタ
+    # ---[地域別フィルタ]---
     local_name = None
     if len(args) == 6:
         local_name = args[5]
@@ -571,7 +569,7 @@ def main():
             print("地域名の指定が正しくありません。○○市といった名称で入力してください", file=sys.stderr)
             exit(1)
 
-    # データ生成
+    # ---[data.json生成]---
     querents_jsondata = gen_querents(**dataset)
     patient_jsondata = gen_patient(**dataset)
     patient_summary_jsondata = gen_patient_summary(start_datetime, **dataset)
@@ -619,11 +617,6 @@ def main():
     # data.jsonを生成する
     with open("data.json", "w") as export_json:
         json.dump(root_json, export_json, indent="\t", ensure_ascii=False)
-
-    # ニュース生成
-    if local_name == "富士市":
-        # print("富士市向けのニュース生成スクリプトを実行します...")
-        pass
 
 
 if __name__ == "__main__":
