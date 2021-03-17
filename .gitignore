@@ -1,0 +1,12 @@
+.venv
+.vscode
+*.json
+__pycache__
+bat_*.sh
+
+call_center.csv
+inspections_summary.csv
+patients.csv
+test_number.csv
+test_people.csv
+details_of_confirmed_cases.csv
