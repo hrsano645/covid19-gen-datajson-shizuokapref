@@ -22,6 +22,17 @@ FILE_NAME = "news.json"
 # 静岡県版はスクレイピング対応
 
 
+class GenerateNews(object):
+    def __init__():
+        pass
+
+    def get_newslist():
+        pass
+
+    def generate_json():
+        pass
+
+
 def search_news_list(bs: BeautifulSoup) -> list:
     """
     静岡の対策サイトの新着情報を探索して、新着情報のリスト一覧を生成する
