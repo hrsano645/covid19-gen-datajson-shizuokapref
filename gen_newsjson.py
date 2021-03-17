@@ -12,6 +12,15 @@ TARGET_URL = "https://www.pref.shizuoka.jp/kinkyu/covid-19.html"
 # 出力するファイル名
 FILE_NAME = "news.json"
 
+# TODO:2021-03-17 静岡版と富士市版と両方対応するので、汎用挙動をクラスで対応しておく
+
+# 汎用クラスに必要な物:
+# ソース定義 get_newslist: ソースの取得手段: ここが唯一変更されて内部データを作る
+# ニュース生成 generate_json: ニュース記事を生成する
+
+# 富士市版用に、オープンデータの変換
+# 静岡県版はスクレイピング対応
+
 
 def search_news_list(bs: BeautifulSoup) -> list:
     """
