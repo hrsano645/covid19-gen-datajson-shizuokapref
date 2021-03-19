@@ -36,6 +36,7 @@ class News(object):
 
     def generate_json(self):
         # 出力するファイル名
+        self._get_newslist()
         FILE_NAME = "news.json"
         with open(FILE_NAME, "w", encoding="utf-8") as newsjson:
             json.dump(
@@ -49,6 +50,8 @@ class News(object):
 def get_shizuoka_newslist() -> list:
     """
     静岡の対策サイトの新着情報を探索して、新着情報のリスト一覧を生成する
+    
+    # なるべくサイトの構造に依存しないでニュース記事を取りに行く
     特定のタグを知りたいつもりだったけど、text属性に正規表現を渡して、日付が書いてある部分を探しています。
 
     > ・9/23 川勝知事からのメッセージを掲載しました
@@ -60,18 +63,17 @@ def get_shizuoka_newslist() -> list:
     req.encoding = req.apparent_encoding
 
     if not req.status_code == 200:
+        # TODO:2021-03-19 ここのprintは例外として処理する。NotConnectError的な例外名
         print("サイトへのアクセスが出来ませんでした: status_code:{}".format(req.status_code))
-        # TODO:2020-07-12 サイトのアクセスが出来ないエラーとして、slackに通知ポストする
         sys.exit(1)
 
     # サイトをBSでパース
     bs = BeautifulSoup(req.text, features="html.parser")
 
-    # なるべくサイトの構造に依存しないでニュース記事を取りに行く
     # サイトの構造が変わり、pタグが取得できない場合はエラーとして終了する
     news_tag_list = bs.find_all(text=re.compile("・\\d{1,2}/\\d{1,2}.*"))
     if not news_tag_list:
-        # TODO:2020-07-12 サイトのアクセスが出来ないエラーとして、slackに通知ポストする
+        # TODO:2021-03-19 ここのprintは例外として処理する。CantParseSiteError的な例外名
         print("サイトの構造が変更されたようです")
         sys.exit(1)
 
@@ -98,25 +100,20 @@ def get_fujicity_newslist() -> list:
     """
     オープンデータを取得して、そこからニュースを生成
     """
+
+    TARGET_URL = "https://opendata.pref.shizuoka.jp/dataset/8484/resource/50885/%E5%AF%8C%E5%A3%AB%E5%B8%82%E6%96%B0%E5%9E%8B%E3%82%B3%E3%83%AD%E3%83%8A%E3%82%A6%E3%82%A4%E3%83%AB%E3%82%B9%E9%96%A2%E9%80%A3%E3%83%8B%E3%83%A5%E3%83%BC%E3%82%B9.csv"
     req = requests.get(TARGET_URL)
     req.encoding = req.apparent_encoding
 
     if not req.status_code == 200:
+        # TODO:2021-03-19 ここのprintは例外として処理する。NotConnectError的な例外名
         print("サイトへのアクセスが出来ませんでした: status_code:{}".format(req.status_code))
-        # TODO:2020-07-12 サイトのアクセスが出来ないエラーとして、slackに通知ポストする
         sys.exit(1)
-
-    # csvファイルとして読み込む
-    # メモリ上に展開する（少ないのでファイルにしなくてもいいと思う）
-    # 辞書のkey名を変更
-    with open(io.BytesIO(req.content), "r", encoding="shift-jis") as csvfile:
-        news_list = list(csv(DictReader(csvfile)))
-
-    # 生成結果のキーを変更する
-    for item in news_list:
-        item["date"] = item.pop()
-        item["url"] = item.pop()
-        item["text"] = item.pop()
+    # print(req.content)
+    # print(req.text)
+    # 富士市のオープンデータには列ヘッダがないので、あらかじめ指定する
+    with io.StringIO(req.text) as csvfile:
+        news_list = list(csv.DictReader(csvfile, ("date", "url", "text")))
 
     return news_list
 
