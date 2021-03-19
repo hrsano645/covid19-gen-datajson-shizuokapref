@@ -86,6 +86,7 @@ def get_shizuoka_newslist() -> list:
         if "http" not in news_link:
             news_link = "https://www.pref.shizuoka.jp" + news_a_tag["href"]
 
+        # TODO:2021-03-19 日付に西暦を入れる必要がある。（年をまたぐ時の対応も必要）
         item = {
             # 日付文字列の先頭に"・"、最後に" "があるから省く
             "date": news_p_tag.strip()[1:],
@@ -103,14 +104,14 @@ def get_fujicity_newslist() -> list:
 
     TARGET_URL = "https://opendata.pref.shizuoka.jp/dataset/8484/resource/50885/%E5%AF%8C%E5%A3%AB%E5%B8%82%E6%96%B0%E5%9E%8B%E3%82%B3%E3%83%AD%E3%83%8A%E3%82%A6%E3%82%A4%E3%83%AB%E3%82%B9%E9%96%A2%E9%80%A3%E3%83%8B%E3%83%A5%E3%83%BC%E3%82%B9.csv"
     req = requests.get(TARGET_URL)
+    # requestのencodingがDLするファイルと合わないので、
     req.encoding = req.apparent_encoding
 
     if not req.status_code == 200:
         # TODO:2021-03-19 ここのprintは例外として処理する。NotConnectError的な例外名
         print("サイトへのアクセスが出来ませんでした: status_code:{}".format(req.status_code))
         sys.exit(1)
-    # print(req.content)
-    # print(req.text)
+
     # 富士市のオープンデータには列ヘッダがないので、あらかじめ指定する
     with io.StringIO(req.text) as csvfile:
         news_list = list(csv.DictReader(csvfile, ("date", "url", "text")))
