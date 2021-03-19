@@ -9,16 +9,7 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 
-
-# TODO:2021-03-17 静岡版と富士市版と両方対応するので、汎用挙動をクラスで対応しておく
-
-# 汎用クラスに必要な物:
-# ソース定義 get_newslist: ソースの取得手段: ここが唯一変更されて内部データを作る
-# ニュース生成 generate_json: ニュース記事を生成する
-
-# 富士市版用に、オープンデータの変換
-# 静岡県版はスクレイピング対応
-
+# 地域名と対応するNewsクラスをセットするコンテナ
 LocalGenCls = namedtuple("LocalGenCls", ["name", "cls"])
 
 
@@ -37,8 +28,7 @@ class News(object):
     def generate_json(self):
         # 出力するファイル名
         self._get_newslist()
-        FILE_NAME = "news.json"
-        with open(FILE_NAME, "w", encoding="utf-8") as newsjson:
+        with open("news.json", "w", encoding="utf-8") as newsjson:
             json.dump(
                 {"newsItems": self.news_item_list},
                 newsjson,
@@ -112,6 +102,7 @@ def get_fujicity_newslist() -> list:
         print("サイトへのアクセスが出来ませんでした: status_code:{}".format(req.status_code))
         sys.exit(1)
 
+    news_list = []
     # 富士市のオープンデータには列ヘッダがないので、あらかじめ指定する
     with io.StringIO(req.text) as csvfile:
         news_list = list(csv.DictReader(csvfile, ("date", "url", "text")))
