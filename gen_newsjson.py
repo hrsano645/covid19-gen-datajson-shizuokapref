@@ -5,6 +5,7 @@ import re
 from collections import namedtuple
 import io
 import csv
+import datetime
 
 import requests
 from bs4 import BeautifulSoup
@@ -78,16 +79,24 @@ def get_shizuoka_newslist() -> list:
     news_list = list()
     for news_p_tag in news_tag_list:
         news_a_tag = news_p_tag.find_next()
-        news_link = news_a_tag["href"]
 
         # urlの正規化:絶対アドレスではない場合の処理
+        news_link = news_a_tag["href"]
         if "http" not in news_link:
             news_link = "https://www.pref.shizuoka.jp" + news_a_tag["href"]
 
-        # TODO:2021-03-19 日付に西暦を入れる必要がある。（年をまたぐ時の対応も必要）
+        # 日付に西暦を加える
+        # 日付文字列の先頭に"・"、最後に" "があるから省く
+        news_date = datetime.datetime.strptime(news_p_tag.strip()[1:], "%m/%d")
+        # 無条件に今年の西暦に変更
+        now_dt = datetime.datetime.now()
+        news_date = news_date.replace(year=now_dt.year)
+
+        # 今の月より大きい月がある場合は無条件で去年にする
+        if now_dt.month < int(news_date.month):
+            news_date = news_date.replace(year=now_dt.year - 1)
         item = {
-            # 日付文字列の先頭に"・"、最後に" "があるから省く
-            "date": news_p_tag.strip()[1:],
+            "date": news_date.strftime("%Y/%m/%d"),
             "url": news_link,
             "text": news_a_tag.text,
         }
