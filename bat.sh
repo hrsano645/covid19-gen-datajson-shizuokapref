@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # 地域名を指定するときにはLOCALNAME変数に＊＊市と入力してください
-LOCALNAME="富士市"
+LOCALNAME=""
 
 # run scripts
 echo "地域名: ${LOCALNAME}"
