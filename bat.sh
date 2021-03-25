@@ -38,4 +38,3 @@ python patients.py patients.csv call_center.csv test_number.csv details_of_confi
 #generate news.json
 echo "===[generate news.json]==="
 python gen_newsjson.py ${LOCALNAME}
-
