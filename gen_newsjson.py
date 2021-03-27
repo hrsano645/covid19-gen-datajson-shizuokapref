@@ -17,7 +17,7 @@ LocalGenCls = namedtuple("LocalGenCls", ["name", "cls"])
 class News(object):
     """
     news.jsonを生成するクラス。必要なデータを取得する関数を渡してインスタンス化し、generate_jsonメソッドを実行することにより、news.jsonを生成します。
-    
+
     news_read_funcは戻り値に"date", "url", "text" の三つのkeyが入る辞書オブジェクトのリストである必要があります。
     # TODO:2021-03-19 news_read_funcの戻り値は現在は厳密に調べていません。実装予定です。
     """
@@ -48,12 +48,12 @@ def get_shizuoka_newslist() -> list:
     """
     静岡県の新型コロナ対策サイトの新着情報を、静岡県の新型コロナの情報サイトからスクレイピングしてnews.jsonに使うデータを作成します
     なるべく失敗しにくくするために、正規表現を使って特定のタグを取り込めるようにしています。
-    
+
     例:
     <p>・3/19 <a href="/kinkyu/covid-19-tyuumokujouhou.html">新型コロナウイルス陽性者が13名確認されました</a></p>
 
     結果は"date", "url", "text" の三つのkeyが入る辞書オブジェクトのリストが作成されます。
-    取得に失敗した場合は例外として終了します。
+    取得に失敗した場合は標準エラーとして終了します。
     """
     # 新着情報を入手するサイトのURL
     TARGET_URL = "https://www.pref.shizuoka.jp/kinkyu/covid-19.html"
@@ -109,7 +109,7 @@ def get_fujicity_newslist() -> list:
 
     富士市の新型コロナ対策サイトに使う新着情報を富士市のオープンデータから取得してnews.jsonに使うデータを作成します
     結果は"date", "url", "text" の三つのkeyが入る辞書オブジェクトのリストが作成されます。
-    取得に失敗した場合は例外として終了します。
+    取得に失敗した場合は標準エラーとして終了します。
     """
 
     TARGET_URL = "https://opendata.pref.shizuoka.jp/dataset/8484/resource/50885/%E5%AF%8C%E5%A3%AB%E5%B8%82%E6%96%B0%E5%9E%8B%E3%82%B3%E3%83%AD%E3%83%8A%E3%82%A6%E3%82%A4%E3%83%AB%E3%82%B9%E9%96%A2%E9%80%A3%E3%83%8B%E3%83%A5%E3%83%BC%E3%82%B9.csv"
