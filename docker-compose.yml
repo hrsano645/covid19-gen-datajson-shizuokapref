@@ -1,0 +1,10 @@
+version: "3"
+services:
+  app:
+    container_name: covid19-datagen
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # tty: true
+
+    # ファイルコピーを行う
