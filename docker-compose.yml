@@ -1,10 +1,10 @@
 version: "3"
 services:
-  app:
-    container_name: covid19-datagen
+  generator:
+    container_name: covid19-data-generator-shizuokapref
     build:
       context: .
       dockerfile: Dockerfile
     # tty: true
-
+    # restart: always
     # ファイルコピーを行う
