@@ -17,8 +17,5 @@ echo "===[generate news.json]==="
 python gen_newsjson.py ${LOCALNAME}
 
 # export docker container to host local
-
-# ls -la ./
-
 cp data.json ./dist/data.json
 cp news.json ./dist/news.json
