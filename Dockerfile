@@ -1,5 +1,5 @@
 # pythonの実行環境をロード
-FROM python:3.8 as python
+FROM python:3.8
 
 ENV PROJECT_ROOTDIR /code
 WORKDIR $PROJECT_ROOTDIR
