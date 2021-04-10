@@ -5,6 +5,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    # tty: true
-    # restart: always
-    # ファイルコピーを行う
+    volumes:
+      - ./dist:/code/dist
+    tty: true

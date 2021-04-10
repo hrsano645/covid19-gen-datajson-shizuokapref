@@ -16,4 +16,9 @@ python patients.py patients.csv call_center.csv test_number.csv details_of_confi
 echo "===[generate news.json]==="
 python gen_newsjson.py ${LOCALNAME}
 
-cp *.json ./dist
+# export docker container to host local
+
+# ls -la ./
+
+cp data.json ./dist/data.json
+cp news.json ./dist/news.json
