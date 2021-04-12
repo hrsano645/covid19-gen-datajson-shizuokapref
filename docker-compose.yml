@@ -1,0 +1,10 @@
+version: "3"
+services:
+  generator:
+    container_name: covid19-data-generator-shizuokapref
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./dist:/code/dist
+    tty: true
