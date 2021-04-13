@@ -19,6 +19,7 @@ else
     echo "===[generate python venv]==="
     python3 -m venv .venv
     source ${cwd}/.venv/bin/activate
+    pip install -U pip
     pip install -r requirements.txt
 fi
 
@@ -35,6 +36,13 @@ curl https://opendata.pref.shizuoka.jp/dataset/8167/resource/48851/220001_new_sh
 
 python patients.py patients.csv call_center.csv test_number.csv details_of_confirmed_cases.csv ${LOCALNAME}
 
-#generate news.json
+# generate news.json
 echo "===[generate news.json]==="
 python gen_newsjson.py ${LOCALNAME}
+
+
+# export json file
+mkdir -p ./dist
+
+cp data.json ./dist/data.json
+cp news.json ./dist/news.json
