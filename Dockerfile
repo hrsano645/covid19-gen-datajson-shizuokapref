@@ -4,12 +4,8 @@ FROM python:3.8
 ENV PROJECT_ROOTDIR /code
 WORKDIR $PROJECT_ROOTDIR
 
-COPY patients.py $PROJECT_ROOTDIR
-COPY gen_newsjson.py $PROJECT_ROOTDIR
 COPY requirements.txt $PROJECT_ROOTDIR
-COPY tests/  $PROJECT_ROOTDIR/tests/
-COPY bat.sh $PROJECT_ROOTDIR
 RUN python -m venv .venv
-RUN . .venv/bin/activate
+RUN .venv/bin/python -m pip install -r requirements.txt
 
 CMD ["bash", "./bat.sh"]

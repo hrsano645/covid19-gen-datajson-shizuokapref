@@ -6,5 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - ./dist:/code/dist
-    tty: true
+      - ./:/code
+      - venv:/code/.venv
+volumes:
+  venv: {}
