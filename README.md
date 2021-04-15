@@ -9,13 +9,9 @@
 - macOS/linux環境を推奨(シェルスクリプトを利用しています)
 - Python: 3.7以降推奨
 - 開発時利用モジュール
-  - pipenv
   - pytest
   - flake8
   - black
-
-## オプション
-
 - dockerでスクリプト動作させることが可能です
   - Win環境で行う場合はdockerでの開発をおすすめします
 
@@ -26,21 +22,46 @@ $ bash bat.sh
 # data.jsonが生成されます
 ```
 
+Windows環境で実行する場合はDocker環境を利用してください。未確認ですがWSLでの動作も可能です。
+
 # Docker
 
-Docker環境はWin, Macを想定しています。現時点ではテストは動作できません。
-Linux環境の場合はホストとコンテナのユーザーIDグループIDの相違でファイルの所有ユーザーがrootになる可能性があります。ユーザーの変更(`chown`)やファイルコピーを行い利用ください。
+Docker環境はWin10での想定しています。
 
-```
-$ docker-compose up --build
-# distディレクトリが新規作成されてその中にjsonファイルが作成されます
-```
-# 開発方法
-
-pipenvを利用してください。pipenv上ではpython3.7を利用しています。
 
 ```bash
-$ pipenv install
+# ビルド
+$ docker-compose build
+# スクリプトを起動します。プロジェクトフォルダ内にjsonファイルが生成されます。
+$ docker-compose run generator
+ 
+# もしくはupコマンドで実行
+$ docker-compose up -- build
 ```
+
+Linux環境の場合、生成されたjsonファイルはホストとコンテナのユーザーIDグループIDの相違でファイルの所有ユーザーがrootになる可能性があります。ユーザーの変更(`chown`)やファイルコピーを行い利用ください。
+
+# 開発方法
+
+dockerで開発する場合は、ローカルのスクリプト等のファイルをコンテナ側に名前付きボリュームでマウントを行うので、ローカルの変更がそのままコンテナに反映されます。
+
+## docker環境
+
+テストはdocker内で生成されるPythonのvenv環境にあるpytestを利用してください。
+
+```bash
+$ docker-compose run generator .venv/bin/pytest
+```
+## python venv
+
+Mac, Linuxを想定しています
+
+```bash
+$ python3 -m venv .venv
+$ source .venv/bin/activate
+$ pip install -U pip
+$ pip install -r requirements.txt
+```
+
 # data.jsonのデータフォーマットについて
 こちらを参照してください -> [data_format.md](data_format.md)
