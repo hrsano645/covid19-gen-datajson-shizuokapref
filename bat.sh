@@ -11,8 +11,3 @@ curl https://opendata.pref.shizuoka.jp/dataset/8167/resource/45876/220001_shizuo
 curl https://opendata.pref.shizuoka.jp/dataset/8167/resource/48851/220001_new_shizuoka_covid19_patients.csv > details_of_confirmed_cases.csv
 
 python patients.py patients.csv call_center.csv test_number.csv details_of_confirmed_cases.csv ${LOCALNAME}
-
-# export json file
-mkdir -p ./dist
-
-cp data.json ./dist/data.json
