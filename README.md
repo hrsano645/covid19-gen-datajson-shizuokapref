@@ -34,7 +34,7 @@ Docker環境はWin10での想定しています。
 $ docker-compose build
 # スクリプトを起動します。プロジェクトフォルダ内にjsonファイルが生成されます。
 $ docker-compose run generator
- 
+
 # もしくはupコマンドで実行
 $ docker-compose up -- build
 ```
@@ -50,7 +50,7 @@ dockerで開発する場合は、ローカルのスクリプト等のファイ�
 テストはdocker内で生成されるPythonのvenv環境にあるpytestを利用してください。
 
 ```bash
-$ docker-compose run generator .venv/bin/pytest
+$ docker-compose run generator pytest
 ```
 ## python venv
 
