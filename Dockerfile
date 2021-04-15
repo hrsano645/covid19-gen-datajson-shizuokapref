@@ -5,7 +5,10 @@ ENV PROJECT_ROOTDIR /code
 WORKDIR $PROJECT_ROOTDIR
 
 COPY requirements.txt $PROJECT_ROOTDIR
-RUN python -m venv .venv
-RUN .venv/bin/python -m pip install -r requirements.txt
+
+ENV VIRTUAL_ENV=.venv
+RUN python3 -m venv .venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+RUN pip install -r requirements.txt
 
 CMD ["bash", "./bat.sh"]
