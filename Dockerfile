@@ -10,5 +10,3 @@ ENV VIRTUAL_ENV=.venv
 RUN python3 -m venv .venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN pip install -r requirements.txt
-
-CMD ["bash", "./bat.sh"]

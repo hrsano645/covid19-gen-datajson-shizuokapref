@@ -8,5 +8,6 @@ services:
     volumes:
       - ./:/code
       - venv:/code/.venv
+    tty: true
 volumes:
   venv: {}
