@@ -22,7 +22,7 @@ else
     pip install -r requirements.txt
 fi
 
-# デバッグ用
+# 実行環境確認用
 echo "pythonpath: `which python`"
 echo "pythonversion: `python --version`"
 
