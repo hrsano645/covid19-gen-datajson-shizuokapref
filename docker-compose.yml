@@ -6,5 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - ./:/code
+      - ./patients.py:/code/patients.py:ro
+      - ./gen_newsjson.py:/code/gen_newsjson.py:ro
+      - ./tests/:/code/tests:ro
+      - ./bat.sh:/code/bat.sh:ro
     tty: true
