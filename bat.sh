@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
 # [設定]
-# 地域名を指定するときにはLOCALNAME変数に＊＊市と入力してください
-LOCALNAME=""
+# 地域名を指定するときにはLOCALNAME変数に静岡県、または地域名（＊＊市）と入力してください。
+# INFO:2021/04/25 news.jsonの地域対応は現時点では静岡県と富士市のみです。
+LOCALNAME="静岡県"
 
 # [スクリプトスタート]
 echo "===[地域名: ${LOCALNAME}]==="
@@ -28,10 +29,10 @@ echo "Using Pythonpath: `which python`"
 echo "pythonversion: `python --version`"
 
 echo "===[data.json 生成]==="
-curl https://opendata.pref.shizuoka.jp/dataset/8167/resource/46009/220001_shizuoka_covid19_call_center.csv > call_center.csv
-curl https://opendata.pref.shizuoka.jp/dataset/8167/resource/46279/220001_shizuoka_covid19_patients.csv > patients.csv
-curl https://opendata.pref.shizuoka.jp/dataset/8167/resource/45876/220001_shizuoka_covid19_test_number.csv > test_number.csv
-curl https://opendata.pref.shizuoka.jp/dataset/8167/resource/48851/220001_new_shizuoka_covid19_patients.csv > details_of_confirmed_cases.csv
+# curl https://opendata.pref.shizuoka.jp/dataset/8167/resource/46009/220001_shizuoka_covid19_call_center.csv > call_center.csv
+# curl https://opendata.pref.shizuoka.jp/dataset/8167/resource/46279/220001_shizuoka_covid19_patients.csv > patients.csv
+# curl https://opendata.pref.shizuoka.jp/dataset/8167/resource/45876/220001_shizuoka_covid19_test_number.csv > test_number.csv
+# curl https://opendata.pref.shizuoka.jp/dataset/8167/resource/48851/220001_new_shizuoka_covid19_patients.csv > details_of_confirmed_cases.csv
 
 python patients.py patients.csv call_center.csv test_number.csv details_of_confirmed_cases.csv ${LOCALNAME}
 

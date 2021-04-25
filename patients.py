@@ -558,14 +558,19 @@ def main():
         local_name = args[5]
 
     # INFO:2021-03-09 patientsのみフィルター
-    if local_name:
-        if local_name in set([row["患者_居住地"] for row in dataset["patients"]]):
-            dataset["patients"] = [
-                row for row in dataset["patients"] if row["患者_居住地"] == local_name
-            ]
-        else:
-            print("地域名の指定が正しくありません。○○市といった名称で入力してください", file=sys.stderr)
-            exit(1)
+    if local_name == "静岡県" or local_name is None:
+        print("静岡県の陽性者属性情報の一覧を生成します")
+    elif local_name in set([row["患者_居住地"] for row in dataset["patients"]]):
+        dataset["patients"] = [
+            row for row in dataset["patients"] if row["患者_居住地"] == local_name
+        ]
+        print("{}の陽性者属性情報の一覧を生成します".format(local_name))
+    else:
+        print(
+            "指定の地域名「{}」では陽性者属性の情報が見つかりませんでした。処理を終了します。".format(local_name),
+            file=sys.stderr,
+        )
+        exit(1)
 
     # ---[data.json生成]---
     querents_jsondata = gen_querents(**dataset)

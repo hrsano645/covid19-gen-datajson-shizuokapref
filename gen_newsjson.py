@@ -141,9 +141,15 @@ def main():
     local_name = None
     if len(sys.argv) == 2:
         local_name = sys.argv[1]
+
     # 地域名がない場合は静岡県
     if not local_name:
         local_name = "静岡県"
+
+    # 定義されていない地域名を指定された場合はメッセージを出して終了
+    if local_name not in (item.name for item in local_func_map):
+        print("指定の地域名「{}」には対応していません".format(local_name))
+        sys.exit(1)
 
     # 地域名を元にフィルターして実行
     for local_func in local_func_map:
@@ -152,7 +158,7 @@ def main():
             local_func.cls.generate_json()
             break
 
-    exit()
+    sys.exit(0)
 
 
 if __name__ == "__main__":
