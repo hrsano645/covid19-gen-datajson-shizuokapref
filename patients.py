@@ -548,7 +548,7 @@ def main():
                 error_msg_body += "{}: {}\n".format(data_name, error_str)
 
     if error_msg_body:
-        error_msg = "バリデーションの結果、処理出来ない行があります。処理を終了します。:\n"
+        error_msg = "バリデーションの結果、処理出来ない行があります。処理を終了します。\n"
         error_msg += error_msg_body
         raise DateValidateError(error_msg)
 
