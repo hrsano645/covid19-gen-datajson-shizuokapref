@@ -1,12 +1,12 @@
 ---
-name: バグ報告
+name: バグ報告 / Bug Report
 about: データ生成の不具合についてはこちら
 title: ""
 labels: bug
 assignees: ""
 ---
 
-## 🐞 バグの詳細
+## 🐞 バグの詳細 / The Problem
 
 - xxxx(できるだけ簡潔に/as concise as possible)
 
