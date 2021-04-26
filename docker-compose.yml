@@ -6,5 +6,10 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - ./:/code
+      - ./:/code/
+      - nomount:/code/.venv/
+      - nomount:/code/__pycache__/
+      - nomount:/code/.pytest_cache/
     tty: true
+volumes:
+  nomount: {}
