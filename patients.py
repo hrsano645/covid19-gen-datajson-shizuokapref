@@ -195,7 +195,16 @@ def parse_patients(filename):
         for _ in range(8):
             next(patients_file)
 
-        return list(csv.DictReader(patients_file))
+        # INFO:2021-04-26: issue#53 オープンデータ側で終端に空行が発生しているので除去する
+        result_list = []
+        for row in list(csv.DictReader(patients_file)):
+            # 特定の行に列ヘッダが無い列が入る（キー名がNone）ので取り除く
+            if None in row.keys():
+                _ = row.pop(None)
+            # 終端に空文字やNoneのみ集合行がある場合は取り除く
+            if not {"", None} == set(row.values()):
+                result_list.append(row)
+        return result_list
 
 
 def validate_dataset(csv_list: list, func_map: dict) -> list:
