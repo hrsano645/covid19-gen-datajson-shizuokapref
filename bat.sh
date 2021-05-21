@@ -11,14 +11,13 @@ if [ $# == 0 ]; then
 elif [ $# == 1 ]; then
     LOCALNAME=${SHELL_ARG_LOCALNAME}
 else
-    echo "引数指定が正しくありません。\"bash bat.sh **市\" といった形式で入力してください"
+    echo "引数指定が正しくありません。\"bash bat.sh [地域名]\" といった形式で入力してください"
+    echo "例: \"bash bat.sh 富士市\""
     exit 1
 fi
 
 # [スクリプトスタート]
 echo "===[地域名: ${LOCALNAME}]==="
-
-# exit 0
 
 # システムにパッケージを入れないためにvenv環境を用意する。既にある場合は有効化
 cwd=$(cd $(dirname $0); pwd)
