@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
 
 # [設定]
-# 地域名を指定するときにはLOCALNAME変数に静岡県、または地域名（＊＊市）と入力してください。
-# INFO:2021/04/25 news.jsonの地域対応は現時点では静岡県と富士市のみです。
-LOCALNAME="静岡県"
+# 地域名を指定するときには "bash bat.sh [地域名]" といった形式で引数をひとつ追加してください
+# 引数を指定しない場合は静岡県のデータを作成します。
+
+SHELL_ARG_LOCALNAME=$1
+
+if [ $# == 0 ]; then
+    LOCALNAME="静岡県"
+elif [ $# == 1 ]; then
+    LOCALNAME=${SHELL_ARG_LOCALNAME}
+else
+    echo "引数指定が正しくありません。\"bash bat.sh [地域名]\" といった形式で入力してください"
+    echo "例: \"bash bat.sh 富士市\""
+    exit 1
+fi
 
 # [スクリプトスタート]
 echo "===[地域名: ${LOCALNAME}]==="
