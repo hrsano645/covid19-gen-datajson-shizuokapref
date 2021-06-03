@@ -195,7 +195,24 @@ def parse_patients(filename):
         for _ in range(8):
             next(patients_file)
 
-        return list(csv.DictReader(patients_file))
+        patients_list = list(csv.DictReader(patients_file))
+
+        result_list = []
+        # issue#53 csvファイルのクレンジング処理
+        for row in patients_list:
+            # 未定義な列がある場合は除去
+            for remove_key in ("", None):
+                if remove_key in row.keys():
+                    print(row)
+                    row.pop(remove_key)
+
+            # 終端に空行がある場合は無視する
+            if set(("", None)) == set(row.values()):
+                continue
+
+            result_list.append(row)
+
+        return result_list
 
 
 def validate_dataset(csv_list: list, func_map: dict) -> list:
