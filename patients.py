@@ -203,7 +203,6 @@ def parse_patients(filename):
             # 未定義な列がある場合は除去
             for remove_key in ("", None):
                 if remove_key in row.keys():
-                    print(row)
                     row.pop(remove_key)
 
             # 終端に空行がある場合は無視する
