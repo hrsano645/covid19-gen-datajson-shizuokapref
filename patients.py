@@ -200,12 +200,12 @@ def parse_patients(filename):
         result_list = []
         # issue#53 csvファイルのクレンジング処理
         for row in patients_list:
-            # 未定義な列がある場合は除去
+            # 行内の無効な要素を除去
             for remove_key in ("", None):
                 if remove_key in row.keys():
                     row.pop(remove_key)
 
-            # 終端に空行がある場合は無視する
+            # 存在する項目がすべて空文字で、列名の数と実際の項目数が一致していない場合は無視する
             if set(("", None)) == set(row.values()):
                 continue
 
