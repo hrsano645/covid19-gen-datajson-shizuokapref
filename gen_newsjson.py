@@ -132,11 +132,6 @@ def get_fujicity_newslist() -> list:
     # requestのencodingがDLするファイルと合わないので修正
     data_req.encoding = data_req.apparent_encoding
 
-    if not data_req.status_code == 200:
-        # TODO:2021-03-19 ここのprintは例外として処理する。NotConnectError的な例外名
-        print("サイトへのアクセスが出来ませんでした: status_code:{}".format(data_req.status_code))
-        sys.exit(1)
-
     news_list = []
     # 富士市のオープンデータには列ヘッダがないので、あらかじめ指定する
     with io.StringIO(data_req.text) as csvfile:
