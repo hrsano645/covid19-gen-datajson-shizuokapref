@@ -114,21 +114,32 @@ def get_fujicity_newslist() -> list:
     オープンデータのURL:https://opendata.pref.shizuoka.jp/dataset/8484.html
     """
 
-    TARGET_URL = (
-        "https://opendata.pref.shizuoka.jp/fs/5/6/6/5/5/_/__________________.csv"
+    # ふじのくにデータカタログからdownloadURLをgetする
+    api_req = requests.get(
+        "https://opendata.pref.shizuoka.jp/api/package_show?id=12698a7b-0af4-446e-926e-697045a819b7"
     )
-    req = requests.get(TARGET_URL)
-    # requestのencodingがDLするファイルと合わないので、
-    req.encoding = req.apparent_encoding
 
-    if not req.status_code == 200:
+    if not api_req.status_code == 200:
         # TODO:2021-03-19 ここのprintは例外として処理する。NotConnectError的な例外名
-        print("サイトへのアクセスが出来ませんでした: status_code:{}".format(req.status_code))
+        print(
+            "ふじのくにデータカタログのAPIへアクセスが出来ませんでした: status_code:{}".format(api_req.status_code)
+        )
+        sys.exit(1)
+
+    # APIにあるファイルのURLを元にCSVファイルをDLする
+    data_req = requests.get(json.loads(api_req.text)["result"]["resources"][0]["url"])
+
+    # requestのencodingがDLするファイルと合わないので修正
+    data_req.encoding = data_req.apparent_encoding
+
+    if not data_req.status_code == 200:
+        # TODO:2021-03-19 ここのprintは例外として処理する。NotConnectError的な例外名
+        print("サイトへのアクセスが出来ませんでした: status_code:{}".format(data_req.status_code))
         sys.exit(1)
 
     news_list = []
     # 富士市のオープンデータには列ヘッダがないので、あらかじめ指定する
-    with io.StringIO(req.text) as csvfile:
+    with io.StringIO(data_req.text) as csvfile:
         news_list = list(csv.DictReader(csvfile, ("date", "url", "text")))
 
     return news_list
