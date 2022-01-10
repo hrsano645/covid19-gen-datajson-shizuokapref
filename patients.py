@@ -200,9 +200,7 @@ def parse_patients(filename):
         patients_raw_text_lines = list(patients_file)
         clean_lines = []
         for line in patients_raw_text_lines:
-            # テキストファイルとして開くと",,,,,"のようなカンマが多数挿入される行が頻繁に発生している
-            # カンマのみしかない行を除去して残りのデータがある行のみを読み込む
-            # テキスト行からカンマ, 改行コードを取り除いて空の文字列になる場合は無視する
+            # テキストファイルとして開くと",,,,,\n"のようなカンマが多数挿入される行が頻繁に発生するため取り除く
             if "" == line.strip().replace(",", ""):
                 continue
             clean_lines.append(line)
