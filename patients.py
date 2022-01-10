@@ -1,4 +1,5 @@
 # coding:utf-8
+from io import StringIO
 import re
 import csv
 import json
@@ -195,23 +196,23 @@ def parse_patients(filename):
         for _ in range(8):
             next(patients_file)
 
+        # INFO:2022-01-11 issue(#53, #63) 一度csvファイルをテキストとして扱い、データとして扱う行で無効となる行を取り除く。
+        patients_raw_text_lines = list(patients_file)
+        clean_lines = []
+        for line in patients_raw_text_lines:
+            # テキストファイルとして開くと",,,,,"のようなカンマが多数挿入される行が頻繁に発生している
+            # カンマのみしかない行を除去して残りのデータがある行のみを読み込む
+            # テキスト行からカンマ, 改行コードを取り除いて空の文字列になる場合は無視する
+            if "" == line.strip().replace(",", ""):
+                continue
+            clean_lines.append(line)
+
+        # 前処理した改行コードありテキスト行のリストをインメモリーでファイルとして扱う
+        patients_file = StringIO("".join(clean_lines))
+
         patients_list = list(csv.DictReader(patients_file))
 
-        result_list = []
-        # issue#53 csvファイルのクレンジング処理
-        for row in patients_list:
-            # 行内の無効な要素を除去
-            for remove_key in ("", None):
-                if remove_key in row.keys():
-                    row.pop(remove_key)
-
-            # 存在する項目がすべて空文字で、列名の数と実際の項目数が一致していない場合は無視する
-            if set(("", None)) == set(row.values()):
-                continue
-
-            result_list.append(row)
-
-        return result_list
+        return patients_list
 
 
 def validate_dataset(csv_list: list, func_map: dict) -> list:
