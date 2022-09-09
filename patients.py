@@ -276,7 +276,7 @@ def gen_querents(**dataset) -> dict:
     return dict(data=querent_data_list)
 
 
-def gen_patient(**dataset) -> dict:
+def gen_patient(need_data, **dataset) -> dict:
     """
     data.json > patients: 陽性者のデータを生成する
     """
@@ -298,26 +298,29 @@ def gen_patient(**dataset) -> dict:
     """
 
     patients_data_list = list()
-    for patients_row in patients:
+    # 静岡県のデータでは、patients.data = []とするため、need_data == Trueのときのみ生成
+    if need_data:
 
-        patients_date = datetime.strptime(patients_row["公表_年月日"], "%Y/%m/%d")
+        for patients_row in patients:
 
-        patients_data_item = json.loads(patients_data_json_template)
+            patients_date = datetime.strptime(patients_row["公表_年月日"], "%Y/%m/%d")
 
-        patients_data_item["リリース日"] = gen_jsonformat_datetime(patients_date)
-        patients_data_item["居住地"] = patients_row["患者_居住地"]
-        patients_data_item["年代"] = replace_nendai_format(patients_row["患者_年代"])
-        patients_data_item["性別"] = patients_row["患者_性別"]
-        patients_data_item["date"] = patients_date.strftime("%Y-%m-%d")
+            patients_data_item = json.loads(patients_data_json_template)
 
-        if patients_row["患者_退院済フラグ"] == "1":
-            patients_data_item["退院"] = "〇"
-        else:
-            # 空白、それ以外の値の場合の場合
-            # patients_row["患者_退院済フラグ"] == "0"を含む
-            patients_data_item["退院"] = ""
+            patients_data_item["リリース日"] = gen_jsonformat_datetime(patients_date)
+            patients_data_item["居住地"] = patients_row["患者_居住地"]
+            patients_data_item["年代"] = replace_nendai_format(patients_row["患者_年代"])
+            patients_data_item["性別"] = patients_row["患者_性別"]
+            patients_data_item["date"] = patients_date.strftime("%Y-%m-%d")
 
-        patients_data_list.append(patients_data_item)
+            if patients_row["患者_退院済フラグ"] == "1":
+                patients_data_item["退院"] = "〇"
+            else:
+                # 空白、それ以外の値の場合の場合
+                # patients_row["患者_退院済フラグ"] == "0"を含む
+                patients_data_item["退院"] = ""
+
+            patients_data_list.append(patients_data_item)
 
     return dict(data=patients_data_list)
 
@@ -573,8 +576,14 @@ def main():
         local_name = args[5]
 
     # INFO:2021-03-09 patientsのみフィルター
+    need_patients_data = True       # 静岡県用にpatients->dataの要・不要を切り替える
+    # INFO:2022-08-28 https://github.com/aktnk/covid19/issues/121
     if local_name == "静岡県" or local_name is None:
-        print("静岡県の陽性者属性情報の一覧を生成します")
+        need_patients_data = False
+        if not need_patients_data:
+            print("静岡県の陽性者属性情報は空欄にします")
+        else:
+            print("静岡県の陽性者属性情報の一覧を生成します")
     elif local_name in set([row["患者_居住地"] for row in dataset["patients"]]):
         dataset["patients"] = [
             row for row in dataset["patients"] if row["患者_居住地"] == local_name
@@ -589,7 +598,7 @@ def main():
 
     # ---[data.json生成]---
     querents_jsondata = gen_querents(**dataset)
-    patient_jsondata = gen_patient(**dataset)
+    patient_jsondata = gen_patient(need_patients_data, **dataset,)
     patient_summary_jsondata = gen_patient_summary(start_datetime, **dataset)
     inspections_summary_jsondata = gen_inspections_summary(**dataset)
     main_summary_jsondata = gen_main_summary(**dataset)
