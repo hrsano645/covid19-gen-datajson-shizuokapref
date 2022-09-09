@@ -81,7 +81,13 @@ def get_shizuoka_newslist() -> list:
         news_a_tag = news_p_tag.find_next()
 
         # urlの正規化:絶対アドレスではない場合の処理
-        news_link = news_a_tag["href"]
+
+        # https://github.com/aktnk/covid19/issues/123 の対策
+        news_link = news_a_tag.get("href")
+        if news_link is None:
+            print(f"'{news_p_tag}'にhrefがないためスキップします")
+            continue
+
         if "http" not in news_link:
             news_link = "https://www.pref.shizuoka.jp" + news_a_tag["href"]
 
